@@ -4,7 +4,7 @@
  * Faster slim Javascript untils lib
  *
  * Clang & Trunk with K&R <The C programming language>
- * support web browser and Node
+ * Support Web Browser And Node
  *
  * Desktop Browser Support (ES3 ES5 redict)
  *  Chrome 30+
@@ -39,7 +39,7 @@ var VERSION = 0.1;
 
 // base method
 var or = {},
-		ar = [],
+    ar = [],
     st = "",
     slc = ar.slice,
     splc = ar.splice,
@@ -413,6 +413,10 @@ function depclone(l){
 
 // List has [ method ]
 // Identifier if has value in array
+// @use has
+// @use hasKey
+// @export *has
+
 // has([1,2,3],2) => true;
 function has(list,n){
 	var idf = 0 , key = isPrimitive(list) ? [] : keys(list);
@@ -424,6 +428,16 @@ function has(list,n){
 	}
 
 	return !!idf;
+}
+
+// hasKey({a:1,b:2},'a') => true;
+// hasKey({a:1,b:2},'c') => false;
+function hasKey(list,key){
+	return has(isPrimitive(list) ? [] : keys(list), key);
+}
+
+function Has(c){
+	return c==="key" ? hasKey : has;
 }
 
 // Array not [ array method ]
@@ -1731,7 +1745,6 @@ var nublist = {
 	cool : cool,
 	clone : clone,
 	depclone : depclone,
-	has : has,
 	not : not,
 	cat : cat,
 	find : filter,
@@ -1778,6 +1791,7 @@ var zublist = {
 	op : op,
 	each : op,
 	map : map,
+	has : Has,
 	type : type,
 	html : html,
 	unique : unique,
