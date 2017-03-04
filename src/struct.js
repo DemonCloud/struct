@@ -20,12 +20,12 @@
  * @License : Fuck any LISCENSE
  */
 
+// Ruler by UMD Javascript
 (function(root,struct,factory){
-	if(typeof define === 'function' && define.amd){
+	if(typeof define === 'function' && define.amd)
 		// support AMD define
-		// ruler by UMD Javascript
 		define(function(){ return factory(struct); });
-	}else if(typeof exports === "object")
+	else if(typeof exports === "object" && typeof module !== "undefined")
 		// support CommonJS exports
 		module.exports = factory(struct);
 	else
@@ -49,26 +49,20 @@ var ar = [],
   	broken = {};
 
 // strict mode hack this
-// var root = this
+// hack* let root = this
 var root = (function(){ return this || ev("this"); }());
 
 // Sub struct return pointer
 // Zub struct with custom method in function
-function nub(fn,name){
-	struct[name] = function(){ return fn; };
-}
-
-function zub(fn,name){
-	struct[name] = function(){ return fn.apply(this,arguments); };
-}
+function nub(fn,name){ struct[name] = function(){ return fn; };}
+function zub(fn,name){ struct[name] = function(){ return fn.apply(this,arguments); };}
 
 // extend Object-assign or pub struct method
-// use @comppse
-// use @extend
-// use *depextend
-// use @nub
-// use @has
-function compose(o1,o2,nothisproperty){
+// @use has
+// @use depclone
+// @export extend
+// @export *depextend
+function extend(o1,o2,nothisproperty){
 	if(nothisproperty)
 		fov(o2,function(v,k){
 			if(isArray(nothisproperty) ? 
@@ -81,21 +75,10 @@ function compose(o1,o2,nothisproperty){
 	return o1;
 }
 
-function extend(protos){
-	if(1 in arguments){
-		compose(protos,arguments[1],arguments[2]);
-	}else{
-		for(var chain in protos)
-			if(protos.hasOwnProperty(chain))
-				nub(protos[chain],chain);
-	}
-	return protos;
-}
-
+// extend object or define module for struct
 function depextend(a,b,nothisproperty){
-	return isDefine(a,"Array") ? 
-				 [].concat(a).concat(b) : 
-				 compose(depclone(a),depclone(b),nothisproperty);
+	var c = isArrayLike(a) ? clone : depclone;
+	return extend(c(a),c(b),nothisproperty);
 }
 
 // define Property [ ES5 method ]
@@ -105,6 +88,14 @@ function define(obj,prop,st){
 		Object.defineProperties(obj,prop) :
 		Object.defineProperty(obj,prop,st);
 }
+
+// create itree function [ method ]
+function cit(fn){
+	var args = slice(arguments,1);
+	return function(){
+		return fn.apply(null,args.concat(arguments)); 
+	};
+}
 	
 // Typeof Check List
 // @ Object
@@ -112,6 +103,9 @@ function define(obj,prop,st){
 // @ Identifier
 // @ Error
 // @ ArrayLike
+// @ NaN
+// @ Int
+// @ Float
 // @ *Define [ contain ]
 //
 // @ exprot type[name] 
@@ -191,19 +185,19 @@ var typeArray = [
 // Typec advance typeof
 function typec(e){
   var i, types = [
-			isDefine(e,"Array"),
-			isDefine(e,"Arguments"),
-			isDefine(e,"Boolean"),
-			isDefine(e,"Function"),
-			isDefine(e,"String"),
-			isDefine(e,"Number"),
-			isDefine(e,"Null"),
-			isDefine(e,"Date"),
-			isDefine(e,"RegExp"),
-			isDefine(e,"NodeList"),
-			isDefine(e,"Undefined"),
-			isDefine(e,"HTMLCollection")
-		];
+		isDefine(e,"Array"),
+		isDefine(e,"Arguments"),
+		isDefine(e,"Boolean"),
+		isDefine(e,"Function"),
+		isDefine(e,"String"),
+		isDefine(e,"Number"),
+		isDefine(e,"Null"),
+		isDefine(e,"Date"),
+		isDefine(e,"RegExp"),
+		isDefine(e,"NodeList"),
+		isDefine(e,"Undefined"),
+		isDefine(e,"HTMLCollection")
+	];
 
 	i = index(types,function(type){ return type===true; });
 	return typeArray[i] ? typeArray[i].toLowerCase() : "object"; 
@@ -240,13 +234,13 @@ function type(c){
 }
 
 // Optimze V8 compress
-// check form bluebird.js ( miss assert checker )
+// check form bluebird.js ( miss *ASSERT checker )
 function v8(obj){
-	function $(){}
-	$.prototype = obj;
+	var _ = function(){}
+	_.prototype = obj;
 	
 	var l = 8;
-	while(l--) new $();
+	while(l--) new _();
 	return obj;
 	// Prevent the function from being optimized through dead code elimination
 	// or further optimizations. This code is never reached but even using eval
@@ -297,12 +291,14 @@ function toHEX(rgb){
 	return ((1<<24) + (rgb.r<<16) + (rgb.g<<8) + rgb.b).toString(16).substr(1);
 }
 
-function cov(c){
+function convert(c){
 	switch((c||"").toLowerCase()){
 		case "string":
 			return toString;
 		case "number":
 			return toNumber;
+		case "array":
+			return slice;
 		case "hex":
 			return toHEX;
 		case "rgb":
@@ -333,7 +329,11 @@ function keys(e){
 	return [];
 }
 
-// Loop for Array && Object
+// Loop Array ^ Object
+// @use al
+// @use ol
+// @export op
+// @alias each
 function al(ary,fn,ts){
 	for(var i=0, l=ary.length; i<l; i++)
 		fn.call(ts||ary,ary[i],i,ary);
@@ -373,10 +373,15 @@ function op(c){
 }
 
 // Simple Clone [ fast , signet ]
-function clone(l){
+// @use depclone
+// @export *clone
+// @alias(deep) depclone
+function clone(l,deep){
+	if(deep)
+		return depclone(l);
 	if(isDefine(l,"Array"))
 		return slice(l);
-	else if(isObject(l) && !_.isFn(l))
+	if(!_.isPrimitive(l))
 		return JSON.parse(JSON.stringify(l));
 	return l;
 }
@@ -394,7 +399,7 @@ function depclone(l){
 		var res = new _();
 		// dist clone data
 		ol(l, function(val,key){
-				this[key] = isPrimitive(l) ? val : depclone(val);
+			this[key] = isPrimitive(l) ? val : depclone(val);
 		},res);
 
 		return res;
@@ -403,6 +408,8 @@ function depclone(l){
 }
 
 // List has [ method ]
+// Identifier if has value in array
+// has([1,2,3],2) => true;
 function has(list,n){
 	var idf = 0 , key = isPrimitive(list) ? [] : keys(list);
 
@@ -416,9 +423,12 @@ function has(list,n){
 }
 
 // Array not [ array method ]
-function not(list,n){
+// pull a element in array
+// not([1,2,3,2,3,4,5],3) => [1,2,2,4,5]
+function not(list,n,useq){
+	var check = useq ? eq : seq;
 	for( var i=0 , len=list.length ; i<len ; i++)
-		if(list[i]===n)
+		if(check(list[i],n))
 			splc.call(list,i--,1);
 	return list;
 }
@@ -449,7 +459,7 @@ function reject(list,idf){
 //
 // index([1,2,3,1,2,4,1],1) => [0,3,6]
 function index(list,idf){
-	var fn = isFn(idf) ? idf : function(v){ return v===idf; },
+	var fn = isFn(idf) ? idf : fseq(idf),
 			res = filter(list,fn,true);
 	return res.length === 1 ? res.pop() : (res.length ? res : null);
 }
@@ -516,11 +526,20 @@ function cat(list,idf){
 }
 
 // Array Unique [ array method ]
+// @use eq
+// @use seq
+// @fix *fseq
 // @use fastunqiue [ pure type ] [ fast n]
 // @use slimunqiue [ all allow ] [ slim n^n-1 ]
 // @export unique(method)
 function seq(a,b){
 	return a===b;
+}
+
+function fseq(a){
+	return function(n){
+		return n === a;
+	};
 }
 
 function fastUnique(ary){
@@ -692,6 +711,8 @@ function concat(){
 }
 
 // Difference array [ method ]
+// @use index
+// @use cit
 // @export diff
 // @export *intsec
 // diff([1,2],[2,3],[1,3,4],[5]) => [4,5]
@@ -701,7 +722,7 @@ function diff(){
 			ite = isFn(last(pact)) ? pact.pop() : false;
 
 	for(var i=0,l=pact.sort().length;i<l;){
-		var p = pact[i] ,list = index(pact, ite ? function(v){ return ite(v,p); } : p),
+		var p = pact[i] ,list = index(pact, ite ? cit(ite,p) : p),
 				n = isArray(list) ? list.length : 1;
 		if(n===1)
 			res.push(pact[i]) && i++;
@@ -722,7 +743,7 @@ function intersection(){
 	al(pact,function(key){
 		var all = true;
 		for(var i=args.length; i--;){
-			if(index(args[i],ite ? function(v){ return ite(v,key); } : key)===null){
+			if(index(args[i],ite ? cit(ite,key) : key)===null){
 				all = false; break;
 			}
 		}
@@ -741,7 +762,6 @@ function merge(){
 			useq = isDefine(last(args),"Boolean") ? args.pop():false;
 	return slimUnique(concat.apply([],args),useq);
 }
-
 
 // Drop array [ method ]
 // base @use slice method
@@ -764,7 +784,7 @@ function dropRight(ary,n){
 function dropTo(ary,it){
 	var res = slice(ary),
 			key = this===void 0 ? "shift" : "pop",
-			fn = isFn(it) ? it : function(val){ return eq(val,it); };
+			fn = isFn(it) ? it : cit(eq,it);
 
 	for(var i=res.length;i--;)
 		if(fn(res[key]())) 
@@ -797,7 +817,6 @@ function flatten(ary,deep){
 		); 
 	},[]);
 }
-
 
 // Static Random [ method ]
 function random(min,max){
@@ -885,6 +904,7 @@ function asy(fn,time){
 // @fix jQuery.serializeArray
 // @fix Zepto.serializeArray
 // @fix z.serializeArray
+// @export requery
 function requery(serializea){
 	var res = {};
 	al(arr,function(elm){ res[elm.name] = elm.value; });
@@ -893,6 +913,7 @@ function requery(serializea){
 
 // the one what found in this array [ method ]
 // @fix index
+// @export one
 function one(list,fn){
 	for(var i=0, l= list.length; i<l; i++)
 		if(fn.call(list,list[i],i,list)) return list[i];
@@ -977,7 +998,7 @@ var escapes = {
 var encodeReg = /[&<">'](?:(amp|lt|quot|gt|#39);)?/g;
 var decodeReg = /&((g|l|quo)t|amp|#39);/g;
 var stripReg = /<script\b[^>]*>(.*?)<\/script>/gim;
-var zipReg = /[\t\r\n\f]/gm;
+var zipReg = /[\t\r\n\f]/gim;
 
 var doomSetting = struct.doomSetting = {
 	escape      : "{{-([\\s\\S]+?)}}",
@@ -992,7 +1013,9 @@ function c_escape(et){ return '\\' + escapes[et]; }
 // html escape method
 // @use encodeHTML
 // @use decodeHTML
+// @use stripHTML
 // @use zipHTML
+// @fix wrap(s,z)
 // export html(command)
 function encodeHTML(str){
 	return +str===str ? 
@@ -1006,9 +1029,12 @@ function decodeHTML(str){
 					str.replace(decodeReg,c_dcode);
 }
 
+function stripHTML(str){
+	return str.replace(stripReg,'');
+}
+
 function zipHTML(str){
-	var s = str.replace(stripReg,'')
-						 .replace(zipReg,'');
+	return str.replace(zipReg,'');
 }
 
 function html(c){
@@ -1017,8 +1043,10 @@ function html(c){
 			return encodeHTML;
 		case "decode":
 			return decodeHTML;
+		case "strip":
+			return stripHTML;
 		default:
-			return zipHTML;
+			return wrap(stripHTML,zipHTML);
 	}
 }
 
@@ -1035,7 +1063,7 @@ function DOOM(txt,name){
 						"|" + (doomSetting.evaluate||no) +"|$","g");
 
 	// start replace
-	zipHTML(txt).replace( exp, function(match,escape,interpolate,evaluate,offset){
+	stripHTML(txt).replace( exp, function(match,escape,interpolate,evaluate,offset){
 
 		res += txt.slice(index,offset).replace(escaper,c_escape);
 		// refresh index where to find text string
@@ -1097,7 +1125,6 @@ function cookie(param){
 			len = args.length,
 			parsec = cookieParse(document.cookie);
 
-
 	if(len){
 		// get cookie
 		if(len === 1)
@@ -1126,7 +1153,7 @@ function cookie(param){
 // @use JSONP
 // @export ajax
 //
-// set localStorage
+// *Init set localStorage
 var ls = root.localStorage;
 if(!ls.getItem("_struct"))
 	ls.setItem("_struct","{}");
@@ -1137,23 +1164,20 @@ var MIME = {
 
 // deal with Data type
 function dataMIME(enable,header,param){
-	if(enable){
-		if(isObject(header)){
+	if(enable)
+		if(isObject(header))
 			switch(MIME[header["Content-Type"]]){
 				case 1:
 					return JSON.stringify(param||{});
 				default : 
 					return _.paramstringify(param||{});
 			}
-		}
-	}
-
 	return param;
 }
 
 // base ajax aix [ method ]
 function aix(option){
-	var config = compose({
+	var config = extend({
 		// default param
 		url       : "",
 		type      : "GET",
@@ -1260,7 +1284,7 @@ function aix(option){
 }
 
 function JSONP(option){
-	var config = compose({
+	var config = extend({
 		url : "",
 		param : broken,
 		key : "callback",
@@ -1474,6 +1498,7 @@ function countBy(ary,by){
 }
 
 // return random element [ method ]
+// auto([1,2,3,4,5]) => random(in ary);
 function auto(ary,size){
 	return toNumber(size) > 1 ? 
 				 slice(shuffle(ary),0,toNumber(size)) : 
@@ -1481,6 +1506,11 @@ function auto(ary,size){
 }
 
 // detect Variable size [ method ]
+// size([1,2,3]) => 3
+// size('abcd') => 4
+// size({a:1}) => 1
+// size(null) => 0
+// size(NaN) => 0
 function size(n){
 	if(!isFn(n) && n!= null && !isNaN(n))
 		return n.length !=null ? n.length : (isObject(n) ? keys(n).length : 0);
@@ -1502,7 +1532,6 @@ function values(obj){
 // create Memoize function [ method ]
 function memoize(fn,context){
 	var memo = [];
-
 	return function(){
 		var args = slice(arguments), df;
 		for(var i=memo.length; i--; ){
@@ -1510,7 +1539,6 @@ function memoize(fn,context){
 				df = memo[i][1]; break;
 			}
 		}
-
 		if(df===void 0)
 			memo.push([args,df=fn.apply(context,args)]);
 		return df;
@@ -1522,6 +1550,27 @@ function negate(fn,context){
 	return function(){
 		return !fn.apply(context,arguments);
 	};
+}
+
+// create wrapper functions stack [ method ]
+// args [ ...function ];
+//
+// var a = function(t){ return "<a>"+t+"<a>"}
+// var b = function(t){ return "<b>"+t+"<b>"}
+// var c = function(t){ return "<c>"+t+"<c>"}
+// var w = wrap(a,b,c);
+// w("tag") => "<c><b><a>tag<a><b><c>"
+function wrap(){
+	var stk = slice(arguments)
+	.filter(function(fn){ return isFn(fn); })
+	.map(function(fn,index){
+		return function(){
+			var next = stk[index+1], res=fn.apply(null,arguments);
+			return isFn(next) ? next(res) : res;
+		};
+	});
+
+	return first(stk);
 }
 
 // Struct stack [=]
@@ -1613,8 +1662,8 @@ var nublist = {
 	groupby : groupby,
 	shuffle: shuffle,
 	first : first,
-	last : last,
 	head : first,
+	last : last,
 	flat : flatten,
 	merge : merge,
 	random : random,
@@ -1634,6 +1683,8 @@ var nublist = {
 	negate : negate,
 	size : size,
 	now : now,
+	cit : cit,
+	wrap : wrap,
 	// swap: swap,
 	v8 : v8,
 };
@@ -1641,10 +1692,11 @@ var nublist = {
 // Advance list
 var zublist = {
 	op : op,
-	cov: cov,
+	each : op,
 	type : type,
 	html : html,
 	unique : unique,
+	convert: convert,
 	pull : pull,
 	param : param,
 	ajax : ajax,
@@ -1656,16 +1708,11 @@ var zublist = {
 };
 
 // Generators
-ol(nublist,nub);
-ol(zublist,zub);
+// @define base symbol
+ol(nublist,nub); ol(zublist,zub);
 
-// define base symbol
-extend(struct,{
-	root:root,
-	broken:broken,
-	version:VERSION,
-	_wrapper:struct
-});
+struct.broken = broken;
+struct.version = VERSION;
 
-return v8(struct);
+return Object.freeze(v8(struct));
 }));
