@@ -6,23 +6,22 @@
  * Clang & Trunk with K&R <The C programming language>
  * support web browser and Node
  *
- * Desktop Browser Support
+ * Desktop Browser Support (ES3 ES5 redict)
  *  Chrome 30+
  *  FireFox 4+
  *  IE 9+
  *
  * Server Version With
- *  Node 6.0+ (full Support with ES6)
+ *  Node 6.0+ (Full support with ES6)
  *
  * @Author  : YiJun
  * @Date    : 2017.2.28 - now
- *
- * @License : Fuck any LISCENSE
+ * @License : FAL
  */
 
-// Ruler by UMD Javascript
 (function(root,struct,factory){
 	if(typeof define === 'function' && define.amd)
+		// Ruler by UMD Javascript
 		// support AMD define
 		define(function(){ return factory(struct); });
 	else if(typeof exports === "object" && typeof module !== "undefined")
@@ -31,17 +30,20 @@
 	else
 		// build on browser global object
 		root.struct = factory(struct);
-}(this, {}, function(struct){
+}(this, struct=function(){ return this; }, function(struct){
 'use strict';
 
+// Strict mode
+// define const
 var VERSION = 0.1;
 
 // base method
-var ar = [],
+var or = {},
+		ar = [],
     st = "",
     slc = ar.slice,
     splc = ar.splice,
-    ts = struct.toString,
+    ts = or.toString,
     tm = st.trim,
     cot = ar.concat,
   	ev = eval,
@@ -49,8 +51,10 @@ var ar = [],
   	broken = {};
 
 // strict mode hack this
-// hack* let root = this
-var root = (function(){ return this || ev("this"); }());
+// hack* =>
+// var root = this
+// var root = (function(){ return this || ev("this"); }());
+var root = struct();
 
 // Sub struct return pointer
 // Zub struct with custom method in function
@@ -167,40 +171,43 @@ function isFloat(n){
 	return +n===n && n%1 !== 0;
 }
 
+function isDate(n){
+	return n instanceof Date;
+}
+
 var typeArray = [
-  'Array',
-  'Arguments',
-  'Boolean',
-  'Function',
-  'String',
-  'Number',
-  'Null',
-  'Date',
-  'RegExp',
-  'NodeList',
-  'Undefined',
-  'HTMLCollection'
+  'array',
+  'function',
+  'null',
+  'undefined',
+  'arguments',
+  'boolean',
+  'string',
+  'number',
+  'date',
+  'regExp',
+  'nodeList',
+  'hTMLCollection'
 ];
 
-// Typec advance typeof
+// Typec advance typeof [ method ]
 function typec(e){
-  var i, types = [
-		isDefine(e,"Array"),
+  var types = [
+  	isArray(e),
+		isFn(e),
+		e === null,
+		e === void 0,
 		isDefine(e,"Arguments"),
 		isDefine(e,"Boolean"),
-		isDefine(e,"Function"),
 		isDefine(e,"String"),
 		isDefine(e,"Number"),
-		isDefine(e,"Null"),
 		isDefine(e,"Date"),
 		isDefine(e,"RegExp"),
 		isDefine(e,"NodeList"),
-		isDefine(e,"Undefined"),
 		isDefine(e,"HTMLCollection")
 	];
 
-	i = index(types,function(type){ return type===true; });
-	return typeArray[i] ? typeArray[i].toLowerCase() : "object"; 
+	return typeArray[index(types,fseq(true))] || "object"; 
 }
 
 // Type export
@@ -228,6 +235,8 @@ function type(c){
 		case "float":
 		case "double":
 			return isFloat;
+		case "date":
+			return isDate;
 		default:
 			return typec;
 	}
@@ -236,11 +245,11 @@ function type(c){
 // Optimze V8 compress
 // check form bluebird.js ( miss *ASSERT checker )
 function v8(obj){
-	var _ = function(){}
-	_.prototype = obj;
+	var $ = function(){}
+	$.prototype = obj;
 	
 	var l = 8;
-	while(l--) new _();
+	while(l--) new $();
 	return obj;
 	// Prevent the function from being optimized through dead code elimination
 	// or further optimizations. This code is never reached but even using eval
@@ -322,7 +331,7 @@ function slice(ary,n,e){
 
 function keys(e){
 	if(e !==null){
-		if(isDefine(e,"Array"))
+		if(isArray(e))
 			return Object.keys(e).map(toNumber);
 		return Object.keys(e);
 	}
@@ -336,27 +345,22 @@ function keys(e){
 // @alias each
 function al(ary,fn,ts){
 	for(var i=0, l=ary.length; i<l; i++)
-		fn.call(ts||ary,ary[i],i,ary);
+		fn.call(ts===void 0 ? ary : ts ,ary[i],i,ary);
 	return ary;
 }
 
 function ol(obj,fn,ts){
-	var key = keys(obj);
-
-	al(key,function(v,i){ 
-		fn.call(ts||obj,obj[v],v,obj);
-	},ts||obj);
-
+	al(keys(obj),function(v){ 
+		fn.call(this,obj[v],v,obj);
+	},ts===void 0 ? obj : ts);
 	return obj;
 }
 
-function fov(list,fn,ts){
-	if(list !=null){
-		if(isDefine(list,"Array"))
-			return al(list,fn,ts);
-		else if(isObject(list) && !isFn(list))
-			return ol(list,fn,ts);
-	}
+function fov(list){
+	if(isArray(list))
+		return al.apply(list,arguments);
+	else if(isObject(list) && !isFn(list) && list !== null)
+		return ol.apply(list,arguments);
 	return list;
 }
 
@@ -379,9 +383,9 @@ function op(c){
 function clone(l,deep){
 	if(deep)
 		return depclone(l);
-	if(isDefine(l,"Array"))
+	if(isArray(l))
 		return slice(l);
-	if(!_.isPrimitive(l))
+	if(!isPrimitive(l))
 		return JSON.parse(JSON.stringify(l));
 	return l;
 }
@@ -394,9 +398,9 @@ function depclone(l){
 	else if(!isPrimitive(l)){
 		// clone object
 		// copy prototype
-		var _ = function(){};
-		_.prototype = l.constructor.prototype;
-		var res = new _();
+		var $ = function(){};
+		$.prototype = l.constructor.prototype;
+		var res = new $();
 		// dist clone data
 		ol(l, function(val,key){
 			this[key] = isPrimitive(l) ? val : depclone(val);
@@ -498,28 +502,46 @@ function last(ary){
 }
 
 // List map [ method ]
-function map(list,fn){
-	return fov(list,function(val,key,list){
-		list[key] = fn.call(list,val,key,list);
+// values map
+// @use mapValue
+// @use mapKey
+// @export map
+function mapValue(list,fn){
+	return fov(clone(list),function(val,key,list){
+		list[key] = this ? fn.call(list,val,key,list) : val[fn];
+	},isFn(fn));
+}
+
+// function mapKey [ method ]
+// map the [ Object ] keys
+function mapKey(list,fn){
+	var res = {};
+	ol(list,function(val){
+		res[fn.apply(val,arguments)] = val;
 	});
+	return res;
+}
+
+function map(c){
+	return c === "key" ? mapKey : mapValue;
 }
 
 // List cat [ method ]
 function cat(list,idf){
 	var res = [];
-	if(isDefine(list,"Array")){
+	if(isArray(list)){
 		for(var i=0,l=list.length; i<l; i++)
 			if(idf.call(list,list[i],i,list)){
 				res.push(list.splice(i,1).pop()); i--;
 			}
 	}else if(isObject(list)){
-		for(var i in list)
-			if(list.hasOwnProperty(i))
-				if(idf.call(list,list[i],i,list)){
+		for(var j in list)
+			if(list.hasOwnProperty(j))
+				if(idf.call(list,list[j],j,list)){
 					var po = {};
-					po[i] = list[i];
+					po[j] = list[j];
 					res.push(po);
-					delete list[i];
+					delete list[j];
 				}
 	}
 	return res;
@@ -587,7 +609,7 @@ function pluck(list,mapkey){
 }
 
 function groupby(list,by){
-	if(isDefine(list,"Array")){
+	if(isArray(list)){
 		var group = {},
 				func  = isFn(by);
 		fov(list,function(val){
@@ -886,7 +908,7 @@ function eq(x,y){
 		var xkeys = keys(x) , ykeys = keys(y);
 		if(xkeys.length === ykeys.length){
 			for(var i=xkeys.length; i--; )
-				if(x[xkeys[i]]!==y[xkeys[i]])
+				if(!eq(x[xkeys[i]],y[xkeys[i]]))
 					return false;
 			return true;
 		}
@@ -1000,7 +1022,9 @@ var decodeReg = /&((g|l|quo)t|amp|#39);/g;
 var stripReg = /<script\b[^>]*>(.*?)<\/script>/gim;
 var zipReg = /[\t\r\n\f]/gim;
 
-var doomSetting = struct.doomSetting = {
+// const DOOM4 settings
+// rule for parse Template
+var doomSetting  = {
 	escape      : "{{-([\\s\\S]+?)}}",
 	interpolate : "{{#([\\s\\S]+?)}}",
 	evaluate    : "{{([\\s\\S]+?)}}"
@@ -1050,44 +1074,47 @@ function html(c){
 	}
 }
 
-// ID form GAME - DOOM4
+// ID Form GAME - [[ DOOM4 ]]
+// slim javascript Template engine
+// [ fast , precomplete, zoom ]
 // @use ev
 // @export doom
 function DOOM(txt,name){
-	var ind = 0,
+	var position = 0,
+			render,
 			res = "_p+='",
 			args = slice(arguments,2),
 
-			exp = RegExp((doomSetting.escape||no) + 
-						"|" + (doomSetting.interpolate||no) + 
-						"|" + (doomSetting.evaluate||no) +"|$","g");
+			exp = RegExp((this.escape||no) + 
+						"|" + (this.interpolate||no) + 
+						"|" + (this.evaluate||no) +"|$","g");
 
 	// start replace
 	stripHTML(txt).replace( exp, function(match,escape,interpolate,evaluate,offset){
-
-		res += txt.slice(index,offset).replace(escaper,c_escape);
+		res += txt.slice(position,offset).replace(escaper,c_escape);
 		// refresh index where to find text string
-		ind = offset + match.length;
+		position = offset + match.length;
 
 		if(escape)
 			// if command is - should encodeHTML string
-			res += "'+\n((_t=(" + escape + "))==null?'':_ech(_t))+\n'";
+			res += "'+((_t=(" + escape + "))==null?'':_(_t))+'";
 		else if(interpolate)
-			res += "'+\n((_t=(" + interpolate + "))==null?'':_t)+\n'";
+			res += "'+((_t=(" + interpolate + "))==null?'':_t)+'";
 		else if(evaluate)
-			res += "';\n" + evaluate + "\n_p+='";
+			res += "';" + evaluate + "_p+='";
+
 		return match;
 	});
 
 	// End wrap res@ String
-	res += "';\n";
-	if(!name) res = "with(_x||{}){\n" + res + "}\n";
-	res = "var _t,_ech = struct.html('encode'),_p='';\n" + res + "return _p;\n";
+	res += "';";
+	if(!name) res = "with(_x||{}){" + res + "}";
+	res = "var _t,_= struct.html('encode'),_p='';" + res + "return _p;";
 
 	// Complete building Function string
 	// try to build anmousyous function
 	try{
-		var render = ev("(function("+(name||"_x") + ",struct" + ( args.length ? ","+args.toString() : "" ) + "){" + res + "})");
+		render = ev("(function("+(name||"_x") + ",struct" + ( args.length ? ","+args.toString() : "" ) + "){" + res + "})");
 	}catch(e){
 		e.res = res;
 		throw e;
@@ -1097,8 +1124,19 @@ function DOOM(txt,name){
   // @ the you build once template that use diff Data, not use diff to build function again
 	// @ protect your template code other can observe it?
 	return function(data){
-		return render.apply(this,[data,struct].concat(slice(arguments,1)));
+		return eq(arguments,render.pre) ? (render.complete) : 
+			(render.pre=arguments, render.complete = render.apply(this,
+				[data,struct].concat(slice(arguments,1))
+			));
 	};
+}
+
+// bound DOOM settings
+function doom(config){
+	return DOOM.bind((isDefine(config,"Object"))?
+		depextend(doomSetting,config):
+		doomSetting
+	);
 }
 
 // Browser cookie
@@ -1242,7 +1280,7 @@ function aix(option){
 
 		ol(config.header,function(val,key){
 			xhr.setRequestHeader(key,val);
-		})
+		});
 	}
 
 	xhr.onreadystatechange = function(event){
@@ -1407,7 +1445,7 @@ function removeEvent(obj,type,fn){
 function emit(obj,type,fn,args){
 	var hasFn = isFn(fn);
 
-	if(isDefine(fn,'Array') && !args){
+	if(isArray(fn) && !args){
 		args = fn;
 		fn = null;
 	}
@@ -1519,13 +1557,17 @@ function size(n){
 
 // return now TimeStamp [ method ]
 function now(){
-	return (new Date).getTime();
+	return (new Date()).getTime();
 }
 
 // object values [ method ]
+// @export values
 function values(obj){
-	var res = [];
-	ol(obj,function(val){ res.push(val); });
+	var res;
+	if(isDefine(obj,"String"))
+		return obj.join('');
+	else
+		ol((res = [],obj),function(val){ res.push(val); });
 	return res;
 }
 
@@ -1569,8 +1611,51 @@ function wrap(){
 			return isFn(next) ? next(res) : res;
 		};
 	});
+	return first(stk) || noop;
+}
 
-	return first(stk);
+// _ chain stack [ method ]
+// @use wrap
+// @use chain
+// @export [ _ ]
+function _(){
+	return new chain(arguments);
+}
+
+function chain(args){
+	define(this,{
+		"-" : {
+			value : 0 in args ? args : void 0,
+			writable : true,
+			enumerable : false,
+			configurable : false
+		},
+		"=" : {
+			value : [],
+			writable : false,
+			enumerable : false,
+			configurable : false
+		}
+	});
+}
+
+chain.prototype.run = function(){
+	return wrap.apply(null,this["="].splice(0,size(this['='])))
+						 .apply(null,this['-']===void 0 ? arguments : this['-']);
+};
+
+// cast arguments to Array
+function castArray(){
+	return slice(arguments);
+}
+
+function toArray(n){
+	var res = [];
+	if(typeof n === "string")
+		res = n.split('');
+	else if(isObject(n) && !isFn(n))
+		res = values(n);
+	return res;
 }
 
 // Struct stack [=]
@@ -1619,10 +1704,10 @@ extend(stack.prototype,{
 		al(args,function(item){
 			var _this = this;
 
-			if(!isFn(item)&&!isDefine(item,"Array"))
+			if(!isFn(item)&&!isArray(item))
 				throw new ReferenceError("add/push arguments error when assign to stack!");
-			var fn = isDefine(item,"Array") ? item[0] : item;
-			var time = isDefine(item,"Array") ? (item[1]||0) : toNumber(item||0);
+			var fn = isArray(item) ? item[0] : item;
+			var time = isArray(item) ? (item[1]||0) : toNumber(item||0);
 
 			var fire = function(args){
 				asy(function(){ 
@@ -1649,7 +1734,6 @@ var nublist = {
 	has : has,
 	not : not,
 	cat : cat,
-	map : map,
 	find : filter,
 	filter : filter,
 	reject : reject,
@@ -1675,7 +1759,6 @@ var nublist = {
 	one : one,
 	eq : eq,
 	asy : asy,
-	doom : DOOM,
 	cookie : cookie,
 	stack : stack,
 	values : values,
@@ -1685,6 +1768,7 @@ var nublist = {
 	now : now,
 	cit : cit,
 	wrap : wrap,
+	castArray:castArray,
 	// swap: swap,
 	v8 : v8,
 };
@@ -1693,6 +1777,7 @@ var nublist = {
 var zublist = {
 	op : op,
 	each : op,
+	map : map,
 	type : type,
 	html : html,
 	unique : unique,
@@ -1705,14 +1790,30 @@ var zublist = {
 	drop : drop,
 	pairs : pair,
 	index : Index,
+	doom : doom
 };
 
 // Generators
 // @define base symbol
-ol(nublist,nub); ol(zublist,zub);
+ol(nublist,function(fn,key){
+	chain.prototype[key] = function(){
+		return this['='].push(fn),this;
+	};
+	return nub.apply(null,arguments);
+}); 
 
+ol(zublist,function(fn,key){
+	chain.prototype[key] = function(){
+		return this['='].push(fn.apply(null,arguments)),this;
+	};
+	return zub.apply(null,arguments);
+});
+
+
+struct._ = _;
 struct.broken = broken;
-struct.version = VERSION;
+struct.VERSION = VERSION;
+struct.prototype = struct.__proto__ = null;
 
 return Object.freeze(v8(struct));
 }));
