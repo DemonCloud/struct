@@ -121,7 +121,7 @@ function isObject(e){
 
 // Function [ type ]
 function isFn(e){
-	return typeof e === "function" && e === e && e;
+	return typeof e === "function" && e === e && !!e;
 }
 
 // Primitive [ type ]
