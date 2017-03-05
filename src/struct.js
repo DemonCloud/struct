@@ -287,7 +287,7 @@ function cool(e){
 // @use toHEX => RGCToHex
 // @export convert(method)
 function toString(s){
-	return s!=null ? (typeof s.toString === "function" ? s.toString() : s + "") : s;
+	return s!=null ? (typeof s.toString === "function" ? s.toString() : s+'') : '';
 }
 
 function toNumber(s){
@@ -1832,19 +1832,19 @@ ol(nublist,function(fn,key){
 	chain.prototype[key] = function(){
 		return this['='].push(fn),this;
 	};
-	return nub.apply(null,arguments);
+	nub.apply(null,arguments);
 }); 
 
 ol(zublist,function(fn,key){
 	chain.prototype[key] = function(){
 		return this['='].push(fn.apply(null,arguments)),this;
 	};
-	return zub.apply(null,arguments);
+	zub.apply(null,arguments);
 });
 
 struct._ = _;
+struct.toString = toString;
 struct.broken = broken;
-struct.prototype = struct.__proto__ = null;
 
 return Object.freeze(v8(struct));
 }));
