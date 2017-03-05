@@ -30,12 +30,12 @@
 	else
 		// build on browser global object
 		root.struct = factory(struct);
-}(this, struct=function(){ return this; }, function(struct){
+}(this, struct=function(){return this;}, function(struct){
 'use strict';
 
 // Strict mode
 // define const
-var VERSION = 0.1;
+struct.VERSION = 0.1;
 
 // base method
 var or = {},
@@ -110,6 +110,8 @@ function cit(fn){
 // @ NaN
 // @ Int
 // @ Float
+// @ Date
+// @ Empty
 // @ *Define [ contain ]
 //
 // @ exprot type[name] 
@@ -175,6 +177,14 @@ function isDate(n){
 	return n instanceof Date;
 }
 
+function isEmpty(n){
+	return isPrimitive(n) || !size(n);
+}
+
+function isElement(e){
+	return isObject(e) && e.nodeType > 0 && e instanceof Node;
+}
+
 var typeArray = [
   'array',
   'function',
@@ -237,6 +247,11 @@ function type(c){
 			return isFloat;
 		case "date":
 			return isDate;
+		case "empty":
+			return isEmpty;
+		case "dom":
+		case "element":
+			return isElement;
 		default:
 			return typec;
 	}
@@ -356,11 +371,11 @@ function ol(obj,fn,ts){
 	return obj;
 }
 
-function fov(list){
+function fov(list,fn,ts){
 	if(isArray(list))
-		return al.apply(list,arguments);
+		return al.call(null,list,fn,ts);
 	else if(isObject(list) && !isFn(list) && list !== null)
-		return ol.apply(list,arguments);
+		return ol.call(null,list,fn,ts);
 	return list;
 }
 
@@ -590,11 +605,12 @@ function fastUnique(ary){
 }
 
 function slimUnique(ary,ueq){
-	for(var check = ueq ? eq : seq, i = 0 ; i<ary.length; i++)
-		if(i !== ary.length-1)
-			for(var j=i+1; j<ary.length; j++)
-				if(check(ary[i],ary[j])) ary.splice(j--,1);
-	return ary;
+	var c = slice(ary);
+	for(var check = ueq ? eq : seq, i = 0 ; i<c.length; i++)
+		if(i !== c.length-1)
+			for(var j=i+1; j<c.length; j++)
+				if(check(c[i],c[j])) c.splice(j--,1);
+	return c;
 }
 
 function unique(c){
@@ -622,7 +638,8 @@ function pluck(list,mapkey){
 	return res;
 }
 
-function groupby(list,by){
+// groupBy [ method ]
+function groupBy(list,by){
 	if(isArray(list)){
 		var group = {},
 				func  = isFn(by);
@@ -1653,6 +1670,8 @@ function chain(args){
 	});
 }
 
+// building the Run method
+// @emit *run
 chain.prototype.run = function(){
 	return wrap.apply(null,this["="].splice(0,size(this['='])))
 						 .apply(null,this['-']===void 0 ? arguments : this['-']);
@@ -1756,7 +1775,7 @@ var nublist = {
 	chunk : chunk,
 	compact : compact,
 	pluck : pluck,
-	groupby : groupby,
+	groupBy : groupBy,
 	shuffle: shuffle,
 	first : first,
 	head : first,
@@ -1823,10 +1842,8 @@ ol(zublist,function(fn,key){
 	return zub.apply(null,arguments);
 });
 
-
 struct._ = _;
 struct.broken = broken;
-struct.VERSION = VERSION;
 struct.prototype = struct.__proto__ = null;
 
 return Object.freeze(v8(struct));
