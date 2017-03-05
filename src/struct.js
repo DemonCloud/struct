@@ -1798,7 +1798,6 @@ var nublist = {
 	negate : negate,
 	size : size,
 	now : now,
-	cit : cit,
 	wrap : wrap,
 	castArray:castArray,
 	// swap: swap,
@@ -1845,6 +1844,7 @@ ol(zublist,function(fn,key){
 struct._ = _;
 struct.toString = toString;
 struct.broken = broken;
+struct.prototype = struct.__proto__ = null;
 
 return Object.freeze(v8(struct));
 }));
