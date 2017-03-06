@@ -112,9 +112,26 @@ function cit(fn){
 // @ Float
 // @ Date
 // @ Empty
+// @ Element [ Node ]
+// @ Nactive
 // @ *Define [ contain ]
 //
 // @ exprot type[name] 
+
+var fts = Function.prototype.toString,
+		reHostCtor = /^\[object .+?Constructor\]$/,
+		// Compile a regexp using a common native method as a template.
+		// We chose `Object#toString` because there's a good chance it is not being mucked with.
+		reNative = RegExp('^' +
+			// Coerce `Object#toString` to a string
+			String(toString)
+			// Escape any special regexp characters
+			.replace(/[.*+?^${}()|[\]\/\\]/g, '\\$&')
+			// Replace mentions of `toString` with `.*?` to keep the template generic.
+			// Replace thing like `for ...` to support environments like Rhino which add extra info
+			// such as method arity.
+			.replace(/toString|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+		);
 
 // Object [ type ]
 function isObject(e){
@@ -185,6 +202,19 @@ function isElement(e){
 	return isObject(e) && e.nodeType > 0 && e instanceof Node;
 }
 
+// Detect if a Function is Native Code with JavaScript
+function isNative(api){
+	var type = typeof value;
+  return type == 'function' ?
+  // Use `Function#toString` to bypass the value's own `toString` method
+  // and avoid being faked out.
+     reNative.test(fts.call(value)) :
+  // Fallback to a host object check because some environments will represent
+  // things like typed arrays as DOM methods which may not conform to the
+  // normal native pattern.
+     (value && type == 'object' && reHostCtor.test(ts.call(value))) || false;
+}
+
 var typeArray = [
   'array',
   'function',
@@ -252,6 +282,8 @@ function type(c){
 		case "dom":
 		case "element":
 			return isElement;
+		case "native":
+			return isNative;
 		default:
 			return typec;
 	}
@@ -260,7 +292,7 @@ function type(c){
 // Optimze V8 compress
 // check form bluebird.js ( miss *ASSERT checker )
 function v8(obj){
-	var $ = function(){}
+	var $ = function(){};
 	$.prototype = obj;
 	
 	var l = 8;
@@ -315,6 +347,15 @@ function toHEX(rgb){
 	return ((1<<24) + (rgb.r<<16) + (rgb.g<<8) + rgb.b).toString(16).substr(1);
 }
 
+function toArray(n){
+	var res = [];
+	if(isObject(n)||isDefine(n,"String"))
+		res = values(n);
+	else if(n!=null)
+		res.push(n);
+	return res;
+}
+
 function convert(c){
 	switch((c||"").toLowerCase()){
 		case "string":
@@ -322,6 +363,8 @@ function convert(c){
 		case "number":
 			return toNumber;
 		case "array":
+			return toArray;
+		case "slice":
 			return slice;
 		case "hex":
 			return toHEX;
@@ -1052,6 +1095,7 @@ var encodeReg = /[&<">'](?:(amp|lt|quot|gt|#39);)?/g;
 var decodeReg = /&((g|l|quo)t|amp|#39);/g;
 var stripReg = /<script\b[^>]*>(.*?)<\/script>/gim;
 var zipReg = /[\t\r\n\f]/gim;
+var commentReg = /<!--[\s\S]*?-->/gim;
 
 // const DOOM4 settings
 // rule for parse Template
@@ -1085,7 +1129,8 @@ function decodeHTML(str){
 }
 
 function stripHTML(str){
-	return str.replace(stripReg,'');
+	return str.replace(stripReg,'')
+						.replace(commentReg,'');
 }
 
 function zipHTML(str){
@@ -1596,9 +1641,9 @@ function now(){
 function values(obj){
 	var res;
 	if(isDefine(obj,"String"))
-		return obj.join('');
+		return obj.split('');
 	else
-		ol((res = [],obj),function(val){ res.push(val); });
+		fov((res = [],obj),function(val){ res.push(val); });
 	return res;
 }
 
@@ -1680,15 +1725,6 @@ chain.prototype.run = function(){
 // cast arguments to Array
 function castArray(){
 	return slice(arguments);
-}
-
-function toArray(n){
-	var res = [];
-	if(typeof n === "string")
-		res = n.split('');
-	else if(isObject(n) && !isFn(n))
-		res = values(n);
-	return res;
 }
 
 // Struct stack [=]
@@ -1778,7 +1814,6 @@ var nublist = {
 	groupBy : groupBy,
 	shuffle: shuffle,
 	first : first,
-	head : first,
 	last : last,
 	flat : flatten,
 	merge : merge,
