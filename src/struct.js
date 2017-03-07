@@ -524,9 +524,9 @@ function Has(c){
 // pull a element in array
 // not([1,2,3,2,3,4,5],3) => [1,2,2,4,5]
 function not(list,n,useq){
-	var check = useq ? eq : seq;
-	for( var i=0 , len=list.length ; i<len ; i++)
-		if(check(list[i],n))
+	var check = isDefine(n,"RegExp") ? regCheck : (useq ? eq : seq);
+	for(var i=0,len=list.length ; i<len ; i++)
+		if(check(n,list[i]))
 			splc.call(list,i--,1);
 	return list;
 }
