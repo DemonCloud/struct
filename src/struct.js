@@ -1993,6 +1993,7 @@ extend(stack.prototype,{
 	}
 });
 
+// signet API
 var nublist = {
 	extend : extend,
 	depextend : depextend,
@@ -2038,7 +2039,7 @@ var nublist = {
 	v8 : v8
 };
 
-// Advance list
+// generator API
 var zublist = {
 	op : op,
 	each : op,
