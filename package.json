@@ -1,0 +1,19 @@
+{
+  "name": "struct",
+  "version": "0.1.0",
+  "description": "Struct is faster Javascript construction lib",
+  "main": "index.js",
+  "repository": "https://github.com/DemonCloud/struct",
+  "author": "YiJun <cloudywolf1@qq.com>",
+  "license": "FAL",
+	"devDependencies": {
+  	"colors":"latest",
+    "gulp": "latest",
+    "gulp-concat": "latest",
+    "gulp-optimize-js": "latest",
+    "gulp-filter" : "latest",
+    "gulp-uglify": "latest",
+    "gulp-rename":"latest",
+    "gulp-eslint":"latest"
+  }
+}

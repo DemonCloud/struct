@@ -377,11 +377,11 @@ function convert(c){
 
 // XOR operation, 
 // details: http://en.wikipedia.org/wiki/XOR_swap_algorithm
-function swap(a,b){
-	a^=b;
-	b^=a;
-	a^=b;
-}
+// function swap(a,b){
+// 	a^=b;
+// 	b^=a;
+// 	a^=b;
+// }
 
 function slice(ary,n,e){
 	return isArrayLike(ary) ? slc.call(ary,n,e) : [];
@@ -469,6 +469,10 @@ function depclone(l){
 	return l;
 }
 
+function regCheck(reg,n){
+	return reg.test(n);
+}
+
 // List has [ method ]
 // Identifier if has value in array
 // @use has
@@ -476,22 +480,23 @@ function depclone(l){
 // @export *has
 
 // has([1,2,3],2) => true;
-function has(list,n){
-	var idf = 0 , key = isPrimitive(list) ? [] : keys(list);
+function has(list,n,ueq){
+	var compare = isDefine("RegExp",n) ? regCheck : (ueq ? eq : seq),
+			idf = false , key = isPrimitive(list) ? [] : keys(list);
 
 	for(var i=key.length; i--;){
-		if(list[key[i]] === n){
-			idf = 1; break;
+		if(compare(n,list[key[i]])){
+			idf = true; break;
 		}
 	}
 
-	return !!idf;
+	return idf;
 }
 
 // hasKey({a:1,b:2},'a') => true;
 // hasKey({a:1,b:2},'c') => false;
-function hasKey(list,key){
-	return has(isPrimitive(list) ? [] : keys(list), key);
+function hasKey(list,key,ueq){
+	return has(isPrimitive(list) ? [] : keys(list), key , ueq);
 }
 
 function Has(c){
@@ -916,9 +921,8 @@ function flatten(ary,deep){
 
 // Static Random [ method ]
 function random(min,max){
-	if(!isDefine(max,"Number")){
+	if(!isDefine(max,"Number"))
 		max = min; min = 0;
-	}
 	return min + Math.floor(Math.random()*(max-min+1));
 }
 
@@ -1616,7 +1620,7 @@ function countBy(ary,by){
 function auto(ary,size){
 	return toNumber(size) > 1 ? 
 				 slice(shuffle(ary),0,toNumber(size)) : 
-				 ary[random(ary.length-1)];
+				 ary[random(size(ary)-1)];
 }
 
 // detect Variable size [ method ]
@@ -1835,8 +1839,7 @@ var nublist = {
 	now : now,
 	wrap : wrap,
 	castArray:castArray,
-	// swap: swap,
-	v8 : v8,
+	v8 : v8
 };
 
 // Advance list
