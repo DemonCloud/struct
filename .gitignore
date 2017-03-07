@@ -31,6 +31,8 @@ node_modules
 jspm_packages
 dest
 dest/*
+tmp
+tmp/*
 
 # Optional npm cache directory
 .npm
