@@ -404,7 +404,7 @@ function slice(ary,n,e){
 }
 
 function keys(e){
-	if(e !==null){
+	if(e !=null){
 		if(isArray(e))
 			return Object.keys(e).map(toNumber);
 		return Object.keys(e);
@@ -1455,7 +1455,7 @@ function cookie(param){
 				"path="   +(args[3]||"/") + ';' +
 				"domain=" +(args[4]||"") + ';' +
 				( args[5] ? "secure":"" )
-			);
+			),true;
 		}
 	}
 
@@ -1729,10 +1729,9 @@ function emit(obj,type,fn,args){
 	}
 
 	if(obj._events)
-		if(obj._events[type])
-				ol(obj._events[type],function(f){
-					if(f===fn||!hasFn) f.apply(obj,args||[]);
-				});
+		ol(obj._events[type],function(f){
+			if(f===fn||!hasFn) f.apply(obj,args||[]);
+		});
 	return obj;
 }
 
