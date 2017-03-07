@@ -176,7 +176,7 @@ function isDefine(obj,name){
 
 // ArrayLike [ type ] 
 function isArrayLike(obj){
-	return typeof obj.length === "number" &&(
+	return (typeof obj.length === "number" && isObject(obj)) &&(
 				 isArray(obj) ||
 				 isDefine(obj,"Arguments") ||
 				 isDefine(obj,"NodeList") ||
@@ -492,7 +492,7 @@ function regCheck(reg,n){
 
 // has([1,2,3],2) => true;
 function has(list,n,ueq){
-	var compare = isDefine("RegExp",n) ? regCheck : (ueq ? eq : seq),
+	var compare = isDefine(n,"RegExp") ? regCheck : (ueq ? eq : seq),
 			idf = false , key = isPrimitive(list) ? [] : keys(list);
 
 	for(var i=key.length; i--;){
