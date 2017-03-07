@@ -113,7 +113,7 @@ function cit(fn){
 // @ Date
 // @ Empty
 // @ Element [ Node ]
-// @ Nactive
+// @ Native
 // @ *Define [ contain ]
 //
 // @ exprot type[name] 
@@ -141,6 +141,11 @@ function isObject(e){
 // Function [ type ]
 function isFn(e){
 	return typeof e === "function" && e === e && !!e;
+}
+
+// Number [ type ]
+function isNumber(e){
+	return +e===e;
 }
 
 // Primitive [ type ]
@@ -356,6 +361,10 @@ function toArray(n){
 	return res;
 }
 
+function toMinus(n){
+	return -toNumber(n);
+}
+
 function convert(c){
 	switch((c||"").toLowerCase()){
 		case "string":
@@ -370,6 +379,8 @@ function convert(c){
 			return toHEX;
 		case "rgb":
 			return toRGB;
+		case "minus":
+			return toMinus;
 		default:
 			return toString;
 	}
@@ -377,11 +388,11 @@ function convert(c){
 
 // XOR operation, 
 // details: http://en.wikipedia.org/wiki/XOR_swap_algorithm
-// function swap(a,b){
-// 	a^=b;
-// 	b^=a;
-// 	a^=b;
-// }
+function swap(a,b){
+	a^=b;
+	b^=a;
+	a^=b;
+}
 
 function slice(ary,n,e){
 	return isArrayLike(ary) ? slc.call(ary,n,e) : [];
@@ -780,7 +791,7 @@ function shuffle(ary){
 	var ln = ary.length,
 			disorder = Array(ln);
 	for( var i=0 , ra; i<ln; i++){
-		ra = random(0,i);
+		ra = randomInt(0,i);
 		if(ra !==i)
 			disorder[i] = disorder[ra];
 		disorder[ra] = ary[i];
@@ -919,11 +930,109 @@ function flatten(ary,deep){
 	},[]);
 }
 
-// Static Random [ method ]
-function random(min,max){
-	if(!isDefine(max,"Number"))
+// TODO 
+// @ add error contruction
+function error(){
+
+}
+
+// Chance random with any construction
+// @use randomInt
+// @use randomFloat
+// @use randomString
+// @export *random
+// init chance form
+var rNumber = '0123456789',
+		rCharow = 'abcdefghijklmnopqrstuvwxyz',
+		rCharup = rCharow.toUpperCase(),
+		rHex    = rNumber+'abcdef',
+		rSymbol = '~`!@#$%^&*(){}[]-+=_|/.,><:;';
+
+// Random static Int [ method ]
+function randomInt(min,max){
+	if(!isNumber(max))
 		max = min; min = 0;
 	return min + Math.floor(Math.random()*(max-min+1));
+}
+
+// Random static Float [ method ]
+function randomFloat(min,max,fix){
+	if(!isNumber(max))
+		max = min; min = 0;
+	var num = min + Math.random()*(max-min+1);
+	return toNumber(fix) ? +(num.toFixed(fix)) : num;
+}
+
+// Random boolean [ method ]
+function randomBool(range){
+	return Math.random()*100 < Math.max(1,Math.min(toNumber(range||50),99));
+}
+
+// Random char [ method ]
+function randomCharacter(all,upper){
+	var letters = all ? (rNumber + rSymbol) : '';
+	letters = (upper ? rCharup : rCharow) + letters;
+
+	return letters.charAt(randomInt(0,size(letters)-1));
+}
+
+// random HEX [ method ]
+// *create rgb random object
+function randomHex(format){
+	return (format ? '#' : '') + toHEX({
+		r : randomInt(0,255),
+		g : randomInt(0,255),
+		b : randomInt(0,255)
+	});
+}
+
+// random string [ method ]
+function randomString(leng,all,upper){
+	// min leng => 2
+	var len = toNumber(leng) || 2,res=[];
+	for (var i=len; i--;)
+		res[i]=randomCharacter(all,upper);
+	return res.join('');
+}
+
+// random Date before now or feature [ method ]
+function randomDate(){
+	var n = now();
+	return new Date(n+(randomBool()? cool : toMinus)(randomInt(0,n)));
+}
+
+// random like dice [ method ]
+// only odd
+function randomDice(max){
+	max = toNumber(max) > 0 ? toNumber(max) : 2; 
+	return randomInt(1,(max%2===0?max:max+1));
+}
+
+function random(c){
+	switch((c||"").toLowerCase()){
+		case "int" :
+			return randomInt;
+		case "float":
+		case "double":
+			return randomFloat;
+		case "string":
+			return randomString;
+		case "bool":
+		case "boolean":
+			return randomBool;
+		case "char":
+		case "character":
+		case "letter":
+			return randomCharacter;
+		case "date":
+			return randomDate;
+		case "hex":
+			return randomHex;
+		case "dice":
+			return randomDice;
+		default:
+			return Math.random;
+	}
 }
 
 // String trim [ method ]
@@ -1620,7 +1729,7 @@ function countBy(ary,by){
 function auto(ary,size){
 	return toNumber(size) > 1 ? 
 				 slice(shuffle(ary),0,toNumber(size)) : 
-				 ary[random(size(ary)-1)];
+				 ary[randomInt(size(ary)-1)];
 }
 
 // detect Variable size [ method ]
@@ -1631,7 +1740,8 @@ function auto(ary,size){
 // size(NaN) => 0
 function size(n){
 	if(!isFn(n) && n!= null && !isNaN(n))
-		return n.length !=null ? n.length : (isObject(n) ? keys(n).length : 0);
+		return typeof n.length === 'number' ?
+					 n.length : (isObject(n) ? keys(n).length : 0);
 	return 0;
 }
 
@@ -1821,7 +1931,6 @@ var nublist = {
 	last : last,
 	flat : flatten,
 	merge : merge,
-	random : random,
 	auto : auto,
 	trim : trim,
 	countBy : countBy,
@@ -1860,9 +1969,10 @@ var zublist = {
 	drop : drop,
 	pairs : pair,
 	index : Index,
+	random : random,
+	error : error,
 	doom : doom
 };
-
 // Generators
 // @define base symbol
 ol(nublist,function(fn,key){
