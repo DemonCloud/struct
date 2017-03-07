@@ -1,15 +1,17 @@
 /* 
  * Struct 0.1
  *
- * Faster slim Javascript untils lib
+ * The C Lang Javascript construction lib
  *
- * Clang & Trunk with K&R <The C programming language>
+ * C & Trunk with K&R <The C programming language>
  * Support Web Browser And Node
  *
  * Desktop Browser Support (ES3 ES5 redict)
  *  Chrome 30+
  *  FireFox 4+
  *  IE 9+
+ *  Android 4+
+ *  Safari 7+
  *
  * Server Version With
  *  Node 6.0+ (Full support with ES6)
@@ -17,9 +19,11 @@
  * @Author  : YiJun
  * @Date    : 2017.2.28 - now
  * @License : FAL
+ *
  */
 
 (function(root,struct,factory){
+
 	if(typeof define === 'function' && define.amd)
 		// Ruler by UMD Javascript
 		// support AMD define
@@ -30,6 +34,7 @@
 	else
 		// build on browser global object
 		root.struct = factory(struct);
+
 }(this, struct=function(){return this;}, function(struct){
 'use strict';
 
@@ -232,7 +237,7 @@ var typeArray = [
   'date',
   'regExp',
   'nodeList',
-  'hTMLCollection'
+  'htmlcollection'
 ];
 
 // Typec advance typeof [ method ]
