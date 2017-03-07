@@ -1034,12 +1034,6 @@ function random(c){
 			return Math.random;
 	}
 }
-
-// String trim [ method ]
-function trim(s){
-	return tm.call(s);
-}
-
 // Create Function caller [ method ]
 // @use partial
 // @use before
@@ -1204,11 +1198,88 @@ var escapes = {
 	"\u2029" : "u2029"
 };
 
-var encodeReg = /[&<">'](?:(amp|lt|quot|gt|#39);)?/g;
-var decodeReg = /&((g|l|quo)t|amp|#39);/g;
-var stripReg = /<script\b[^>]*>(.*?)<\/script>/gim;
-var zipReg = /[\t\r\n\f]/gim;
-var commentReg = /<!--[\s\S]*?-->/gim;
+var encodeReg = /[&<">'](?:(amp|lt|quot|gt|#39);)?/g,
+		decodeReg = /&((g|l|quo)t|amp|#39);/g,
+		stripReg = /<script\b[^>]*>(.*?)<\/script>/gim,
+		zipReg = /[\t\r\n\f]/gim,
+		collapseReg = /[\s\x20\xA0\uFEFF]+/g,
+		commentReg = /<!--[\s\S]*?-->/gim,
+		trimLReg = /^[\s\uFEFF\xA0]+/g,
+		upperReg = /[A-Z]/g,
+		trimRReg = /[\s\uFEFF\xA0]+$/g;
+
+// String Methods 
+// @use trim
+// @use trimLeft
+// @use trimRight
+// @use camelize
+// @use capitalize
+// @use collapse
+// @use rizewith [ default (-) ]
+//
+// String trim [ method ]
+function trim(s){
+	return tm.call(s);
+}
+
+function trimLeft(s){
+	return s.replace(trimLReg,'');
+}
+
+function trimRight(s){
+	return s.replace(trimRReg,'');
+}
+
+function camelize(s){
+	var uspt = !~s.search('-') ? (!~s.search('_') ? '' : '_') : '-';
+	if(uspt){
+		uspt = s.split(uspt);
+		for(var i=1;i<uspt.length;i++)
+			uspt[i] = capitalize(uspt[i]);
+		return uspt.join('');
+	}
+	return s;
+}
+
+function capitalize(s){
+	return s.charAt(0).toUpperCase()+s.substr(1);
+}
+
+function collapse(s){
+	return s.replace(zipReg,'').replace(collapseReg,' ');
+}
+
+function rize(s,and){
+	and = toString(and) || '-'; 
+	return s.replace(upperReg,function(charz,index){
+		return (index>0 ? and : '') + charz.toLowerCase();
+	});
+}
+
+function string(c){
+	switch((c||'').toLowerCase()){
+		case "trim":
+			return trim;
+		case "trimleft":
+			return trimLeft;
+		case "trimright":
+			return trimRight;
+		case "came":
+		case "camelize":
+			return camelize;
+		case "capit":
+		case "capital":
+		case "capitalize":
+			return capitalize;
+		case "collapse":
+			return collapse;
+		case "rize":
+		case "rizewith":
+			return rize;
+		default:
+			return toString;
+	}
+}
 
 // const DOOM4 settings
 // rule for parse Template
@@ -1926,14 +1997,14 @@ var nublist = {
 	compact : compact,
 	pluck : pluck,
 	groupBy : groupBy,
+	countBy : countBy,
+	castArray:castArray,
 	shuffle: shuffle,
 	first : first,
 	last : last,
 	flat : flatten,
 	merge : merge,
 	auto : auto,
-	trim : trim,
-	countBy : countBy,
 	part : part,
 	once : once,
 	one : one,
@@ -1944,10 +2015,9 @@ var nublist = {
 	values : values,
 	memoize: memoize,
 	negate : negate,
+	wrap : wrap,
 	size : size,
 	now : now,
-	wrap : wrap,
-	castArray:castArray,
 	v8 : v8
 };
 
@@ -1970,6 +2040,7 @@ var zublist = {
 	pairs : pair,
 	index : Index,
 	random : random,
+	string : string,
 	error : error,
 	doom : doom
 };
