@@ -454,10 +454,12 @@ function op(c){
 // @use depclone
 // @export *clone
 // @alias(deep) depclone
+
+// Simple clone [ fast ]
 function clone(l,deep){
 	if(deep)
 		return depclone(l);
-	if(isArray(l))
+	if(isArrayLike(l))
 		return slice(l);
 	if(!isPrimitive(l))
 		return JSON.parse(JSON.stringify(l));
@@ -470,8 +472,7 @@ function depclone(l){
 		// clone array 
 		return slice(l);
 	else if(!isPrimitive(l)){
-		// clone object
-		// copy prototype
+		// clone object ^ with copy prototype
 		var $ = function(){};
 		$.prototype = l.constructor.prototype;
 		var res = new $();
@@ -818,9 +819,7 @@ function chunk(ary,size){
 // save pure number filter the false value
 // compact([1,'',false,2,undefined,null,function(){},[],3]) => [1,2,3]
 function compact(ary){
-	return ary.filter(function(val){
-		return +val === val && val;
-	});
+	return ary.filter(cool);
 }
 
 function concat(){
@@ -1206,12 +1205,18 @@ var escapes = {
 var encodeReg = /[&<">'](?:(amp|lt|quot|gt|#39);)?/g,
 		decodeReg = /&((g|l|quo)t|amp|#39);/g,
 		stripReg = /<script\b[^>]*>(.*?)<\/script>/gim,
-		zipReg = /[\t\r\n\f]/gim,
-		collapseReg = /[\s\x20\xA0\uFEFF]+/g,
 		commentReg = /<!--[\s\S]*?-->/gim,
-		trimLReg = /^[\s\uFEFF\xA0]+/g,
+		zipReg = /[\t\r\n\f]/gim,
 		upperReg = /[A-Z]/g,
-		trimRReg = /[\s\uFEFF\xA0]+$/g;
+		sReg = '[\\s\\x20\\xA0\\uFEFF]+',
+
+		collapseReg = new RegExp(sReg,'g'),
+		trimLReg = new RegExp('^'+sReg,'g'),
+		trimRReg = new RegExp(sReg+'$','g'),
+		tagCenterReg = new RegExp('>'+sReg+'<','g'),
+		tagLeftReg = new RegExp('<'+sReg,'g'),
+		tagRightReg = new RegExp(sReg+'>','g'),
+		tagCloseReg = new RegExp('<'+sReg+'\/'+sReg,'g');
 
 // String Methods 
 // @use trim
@@ -1251,7 +1256,12 @@ function capitalize(s){
 }
 
 function collapse(s){
-	return s.replace(zipReg,'').replace(collapseReg,' ');
+	return s.replace(zipReg,'')
+					.replace(collapseReg,' ')
+					.replace(tagCenterReg,'><')
+					.replace(tagLeftReg,'<')
+					.replace(tagRightReg,'>')
+					.replace(tagCloseReg,'</');
 }
 
 function rize(s,and){
@@ -1304,7 +1314,8 @@ function c_escape(et){ return '\\' + escapes[et]; }
 // @use stripHTML
 // @use zipHTML
 // @fix wrap(s,z)
-// export html(command)
+//
+// @export html(command)
 function encodeHTML(str){
 	return +str===str ? 
 					str :
@@ -1323,7 +1334,7 @@ function stripHTML(str){
 }
 
 function zipHTML(str){
-	return str.replace(zipReg,'');
+	return collapse(str);
 }
 
 function html(c){
@@ -1334,6 +1345,8 @@ function html(c){
 			return decodeHTML;
 		case "strip":
 			return stripHTML;
+		case "zip":
+			return zipHTML;
 		default:
 			return wrap(stripHTML,zipHTML);
 	}
@@ -1341,7 +1354,7 @@ function html(c){
 
 // ID Form GAME - [[ DOOM4 ]]
 // slim javascript Template engine
-// [ fast , precomplete, zoom ]
+// [ fast, precomplete, zoom ]
 // @use ev
 // @export doom
 function DOOM(txt,name){
