@@ -3,7 +3,8 @@
  *
  * The C Lang Javascript construction lib
  *
- * C & Trunk with K&R <The C programming language>
+ * C & Trunk with <The C programming language>
+ * Hats off to K&R
  * Support Web Browser And Node
  *
  * Desktop Browser Support (ES3 ES5 redict)
@@ -99,10 +100,19 @@ function define(obj,prop,st){
 }
 
 // create itree function [ method ]
+// save the arguments to next apply
 function cit(fn){
 	var args = slice(arguments,1);
 	return function(){
 		return fn.apply(null,args.concat(arguments)); 
+	};
+}
+
+function citd(fn,check){
+	return function(){
+		return check.apply(null,arguments) ? 
+					 fn.apply(null,arguments) : 
+					 cool.apply(null,arguments) ; 
 	};
 }
 	
@@ -123,13 +133,12 @@ function cit(fn){
 //
 // @ exprot type[name] 
 
-var fts = Function.prototype.toString,
-		reHostCtor = /^\[object .+?Constructor\]$/,
+var reHostCtor = /^\[object .+?Constructor\]$/,
 		// Compile a regexp using a common native method as a template.
 		// We chose `Object#toString` because there's a good chance it is not being mucked with.
 		reNative = RegExp('^' +
 			// Coerce `Object#toString` to a string
-			String(toString)
+			String(ts)
 			// Escape any special regexp characters
 			.replace(/[.*+?^${}()|[\]\/\\]/g, '\\$&')
 			// Replace mentions of `toString` with `.*?` to keep the template generic.
@@ -161,9 +170,9 @@ function isPrimitive(e){
 var isArray = Array.isArray;
 
 // Identifier [ type ]
-var rident = /^[a-z$_][a-z$_0-9]*$/i;
+var rident = /^[a-z$_]+[a-z$_0-9]*$/i;
 function isIdentifier(e){
-	return rident.test(e);
+	return e!=null ? rident.test(e) : false;
 }
 
 // Error [ type ]
@@ -188,6 +197,7 @@ function isArrayLike(obj){
 				 isDefine(obj,"HTMLCollection"));
 }
 
+// isNaN [ ES6 Method ]
 function isNaN(n){
 	return typeof n === "number" && n !== n;
 }
@@ -205,7 +215,7 @@ function isDate(n){
 }
 
 function isEmpty(n){
-	return isPrimitive(n) || !size(n);
+	return isPrimitive(n) ? false : !size(n);
 }
 
 function isElement(e){
@@ -214,15 +224,14 @@ function isElement(e){
 
 // Detect if a Function is Native Code with JavaScript
 function isNative(api){
-	var type = typeof value;
-  return type == 'function' ?
+  return typeof api == 'function' ?
   // Use `Function#toString` to bypass the value's own `toString` method
   // and avoid being faked out.
-     reNative.test(fts.call(value)) :
+     reNative.test(Function.prototype.toString.call(api)) :
   // Fallback to a host object check because some environments will represent
   // things like typed arrays as DOM methods which may not conform to the
   // normal native pattern.
-     (value && type == 'object' && reHostCtor.test(ts.call(value))) || false;
+     (api && typeof api == 'object' && reHostCtor.test(ts.call(api))) || false;
 }
 
 var typeArray = [
@@ -235,7 +244,7 @@ var typeArray = [
   'string',
   'number',
   'date',
-  'regExp',
+  'regexp',
   'nodeList',
   'htmlcollection'
 ];
@@ -261,7 +270,7 @@ function typec(e){
 }
 
 // Type export
-function type(c){
+function typeco(c){
 	switch((c||"").toLowerCase()){
 		case "object":
 			return isObject;
@@ -275,8 +284,10 @@ function type(c){
 		case "nan":
 			return isNaN;
 		case "primitive":
+		case "prim":
 			return isPrimitive;
 		case "identifier":
+		case "idt":
 			return isIdentifier;
 		case "define":
 			return isDefine;
@@ -290,6 +301,7 @@ function type(c){
 		case "empty":
 			return isEmpty;
 		case "dom":
+		case "elm":
 		case "element":
 			return isElement;
 		case "native":
@@ -338,8 +350,8 @@ function toNumber(s){
 
 // HEX Create RGB object
 function toRGB(hex){
-	var h = parseInt(((~hex.indexOf('#')) ? hex : hex.substr(1)),16);
-	return { r:h>>16, g:(h&0x00FF00)>>8, b:(h&0x0000FF) };
+	var h = parseInt((!~hex.indexOf('#') ? hex : hex.substr(1)),16);
+	return { r: h>>16, g:(h&0x00FF00)>>8, b:(h&0x0000FF) };
 }
 
 // RGB object to HEX
@@ -372,14 +384,15 @@ function toMinus(n){
 
 function convert(c){
 	switch((c||"").toLowerCase()){
+		case "str":
 		case "string":
 			return toString;
+		case "num":
 		case "number":
 			return toNumber;
+		case "arr":
 		case "array":
 			return toArray;
-		case "slice":
-			return slice;
 		case "hex":
 			return toHEX;
 		case "rgb":
@@ -443,7 +456,7 @@ function op(c){
 	switch((c||"").toLowerCase()){
 		case "array":
 			return al;
-		case "obejct":
+		case "object":
 			return ol;
 		default :
 			return fov;
@@ -468,19 +481,19 @@ function clone(l,deep){
 
 // Deeping Clone [ fast , complicated ]
 function depclone(l){
-	if(isArrayLike(l))
+	var res;
+	if(isArrayLike(l)){
 		// clone array 
-		return slice(l);
-	else if(!isPrimitive(l)){
+		return slice(l).map(citd(depclone,negate(isPrimitive)));
+	}else if(!isPrimitive(l)){
 		// clone object ^ with copy prototype
 		var $ = function(){};
 		$.prototype = l.constructor.prototype;
-		var res = new $();
+		res = new $();
 		// dist clone data
 		ol(l, function(val,key){
-			this[key] = isPrimitive(l) ? val : depclone(val);
+			this[key] = isPrimitive(val) ? val : depclone(val);
 		},res);
-
 		return res;
 	}
 	return l;
@@ -516,19 +529,30 @@ function hasKey(list,key,ueq){
 	return has(isPrimitive(list) ? [] : keys(list), key , ueq);
 }
 
-function Has(c){
-	return c==="key" ? hasKey : has;
+// Array not [ array method ]
+// @use notdel
+// @export *not
+// pull a element in array ^ object
+function notdel(list,k,isarr){
+	return isarr ? splc.call(list,k,1) : delete list[k];
 }
 
-// Array not [ array method ]
-// pull a element in array
 // not([1,2,3,2,3,4,5],3) => [1,2,2,4,5]
 function not(list,n,useq){
-	var check = isDefine(n,"RegExp") ? regCheck : (useq ? eq : seq);
-	for(var i=0,len=list.length ; i<len ; i++)
-		if(check(n,list[i]))
-			splc.call(list,i--,1);
+	var check = isDefine(n,"RegExp") ? regCheck : (useq ? eq : seq),
+			isarr = isArray(list),
+			p = keys(list);
+
+	for(var i=0 ; i<p.length ; i++)
+		if(check(n,list[p[i]]))
+			if(notdel(list,p[i],isarr) && isarr)
+				p.pop(i--);
+	
 	return list;
+}
+
+function $has(c){
+	return c==="key" ? hasKey : has;
 }
 
 // List filter [ method ]
@@ -1841,11 +1865,11 @@ function now(){
 // object values [ method ]
 // @export values
 function values(obj){
-	var res;
+	var res=[];
 	if(isDefine(obj,"String"))
 		return obj.split('');
 	else
-		fov((res = [],obj),function(val){ res.push(val); });
+		fov(obj,function(val){ res.push(val); });
 	return res;
 }
 
@@ -2000,7 +2024,6 @@ var nublist = {
 	define : define,
 	keys : keys,
 	noop : noop,
-	cool : cool,
 	clone : clone,
 	depclone : depclone,
 	not : not,
@@ -2044,8 +2067,8 @@ var zublist = {
 	op : op,
 	each : op,
 	map : map,
-	has : Has,
-	type : type,
+	has : $has,
+	type : typeco,
 	html : html,
 	unique : unique,
 	convert: convert,

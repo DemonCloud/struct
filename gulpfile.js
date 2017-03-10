@@ -1,5 +1,6 @@
-const src = "./src/"
-const dest = "./dest/"
+const src = "./src/";
+const dest = "./dest/";
+const testdest = "./docs/js/";
 
 const colors = require("colors");
 const gulp = require("gulp");
@@ -7,6 +8,19 @@ const gfilter = require("gulp-filter");
 const uglify = require("gulp-uglify");
 const eslint = require("gulp-eslint");
 const rename = require("gulp-rename");
+
+const stdout= (result) => {
+	// Called for each ESLint result. 
+	if(result.errorCount){
+		console.log(`ESLint result: ${result.filePath}`);
+		console.log((`# Errors: ${result.errorCount}`).red);
+		for(let i=0,msg; i<result.messages.length;i++){
+			msg = result.messages[i];
+			console.log((`   Line:${msg.line}   Column: ${msg.column}`).yellow);
+			console.log((` - ${msg.message}`).red);
+		}
+	}
+};
 
 gulp.task('build',function(){
 	return gulp.src(src+"struct.js")
@@ -53,21 +67,11 @@ gulp.task('build',function(){
 				browser : true
 			}
 		}))
-		.pipe(eslint.result(result => {
-			// Called for each ESLint result. 
-			if(result.errorCount){
-				console.log(`ESLint result: ${result.filePath}`);
-				console.log((`# Errors: ${result.errorCount}`).red);
-				for(let i=0,msg; i<result.messages.length;i++){
-					msg = result.messages[i];
-					console.log((`   Line:${msg.line}   Column: ${msg.column}`).yellow);
-					console.log((` - ${msg.message}`).red);
-				}
-			}
-		}))
+		.pipe(eslint.result(stdout))
 		.pipe(uglify())
 		.pipe(rename('struct.c.js'))
-		.pipe(gulp.dest(dest));
+		.pipe(gulp.dest(dest))
+		.pipe(gulp.dest(testdest));
 });
 
 gulp.task('default',['build']);
