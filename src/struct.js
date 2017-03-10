@@ -110,9 +110,7 @@ function cit(fn){
 
 function citd(fn,check){
 	return function(){
-		return check.apply(null,arguments) ? 
-					 fn.apply(null,arguments) : 
-					 cool.apply(null,arguments) ; 
+		return (check.apply(null,arguments) ?  fn : cool ).apply(null,arguments);
 	};
 }
 	
