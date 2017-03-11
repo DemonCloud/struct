@@ -48,7 +48,6 @@ var or = {},
     ar = [],
     st = "",
     slc = ar.slice,
-    splc = ar.splice,
     ts = or.toString,
     tm = st.trim,
     cot = ar.concat,
@@ -336,7 +335,7 @@ function cool(e){
 // @use toString
 // @use toNumber
 // @use toRGB => HexToRGB
-// @use toHEX => RGCToHex
+// @use toHEX => RGBToHex
 // @export convert(method)
 function toString(s){
 	return s!=null ? (typeof s.toString === "function" ? s.toString() : s+'') : '';
@@ -532,7 +531,7 @@ function hasKey(list,key,ueq){
 // @export *not
 // pull a element in array ^ object
 function notdel(list,k,isarr){
-	return isarr ? splc.call(list,k,1) : delete list[k];
+	return isarr ? list.splice(k,1) : delete list[k];
 }
 
 // not([1,2,3,2,3,4,5],3) => [1,2,2,4,5]
@@ -2037,70 +2036,71 @@ extend(stack.prototype,{
 
 // signet API
 var nublist = {
-	extend : extend,
+	_         : _,
+	define    : define,
+	extend    : extend,
 	depextend : depextend,
-	define : define,
-	keys : keys,
-	noop : noop,
-	clone : clone,
-	depclone : depclone,
-	not : not,
-	cat : cat,
-	find : filter,
-	filter : filter,
-	reject : reject,
-	diff : diff,
-	intsec : intersection,
-	hook : hook,
-	chunk : chunk,
-	compact : compact,
-	pluck : pluck,
-	groupBy : groupBy,
-	countBy : countBy,
-	castArray:castArray,
-	shuffle: shuffle,
-	first : first,
-	last : last,
-	flat : flatten,
-	merge : merge,
-	auto : auto,
-	part : part,
-	once : once,
-	eq : eq,
-	asy : asy,
-	cookie : cookie,
-	stack : stack,
-	values : values,
-	memoize: memoize,
-	negate : negate,
-	wrap : wrap,
-	size : size,
-	now : now,
-	v8 : v8
+	keys      : keys,
+	noop      : noop,
+	clone     : clone,
+	depclone  : depclone,
+	not       : not,
+	cat       : cat,
+	find      : filter,
+	filter    : filter,
+	reject    : reject,
+	diff      : diff,
+	intsec    : intersection,
+	hook      : hook,
+	chunk     : chunk,
+	compact   : compact,
+	pluck     : pluck,
+	groupBy   : groupBy,
+	countBy   : countBy,
+	castArray : castArray,
+	shuffle   : shuffle,
+	first     : first,
+	last      : last,
+	flat      : flatten,
+	merge     : merge,
+	auto      : auto,
+	part      : part,
+	once      : once,
+	eq        : eq,
+	asy       : asy,
+	cookie    : cookie,
+	stack     : stack,
+	values    : values,
+	memoize   : memoize,
+	negate    : negate,
+	wrap      : wrap,
+	size      : size,
+	now       : now,
+	v8        : v8
 };
 
 // generator API
 var zublist = {
-	op : $op,
-	each : $op,
-	map : $map,
-	has : $has,
-	type : $type,
-	html : $html,
-	unique : $unique,
-	convert: $convert,
-	pull : $pull,
-	param : $param,
-	ajax : $ajax,
-	event : $event,
-	prop : $prop,
-	drop : $drop,
-	pairs : $pair,
-	index : $index,
-	random : $random,
-	string : $string,
-	error : $error,
-	doom : $doom
+	op      : $op,
+	each    : $op,
+	map     : $map,
+	has     : $has,
+	type    : $type,
+	html    : $html,
+	unique  : $unique,
+	convert : $convert,
+	pull    : $pull,
+	param   : $param,
+	ajax    : $ajax,
+	event   : $event,
+	prop    : $prop,
+	drop    : $drop,
+	pairs   : $pair,
+	index   : $index,
+	random  : $random,
+	string  : $string,
+	error   : $error,
+	doom    : $doom
 };
 // Generators
 // @define base symbol
@@ -2118,7 +2118,6 @@ ol(zublist,function(fn,key){
 	zub.apply(null,arguments);
 });
 
-struct._ = _;
 struct.toString = toString;
 struct.broken = broken;
 struct.prototype = struct.__proto__ = null;
