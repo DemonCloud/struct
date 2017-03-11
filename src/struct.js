@@ -104,13 +104,13 @@ function define(obj,prop,st){
 function cit(fn){
 	var args = slice(arguments,1);
 	return function(){
-		return fn.apply(null,args.concat(arguments)); 
+		return fn.apply(null,args.concat(slice(arguments))); 
 	};
 }
 
 function citd(fn,check){
 	return function(){
-		return (check.apply(null,arguments) ?  fn : cool ).apply(null,arguments);
+		return (check.apply(null,arguments) ? fn : cool).apply(null,arguments);
 	};
 }
 	
@@ -268,7 +268,7 @@ function typec(e){
 }
 
 // Type export
-function typeco(c){
+function $type(c){
 	switch((c||"").toLowerCase()){
 		case "object":
 			return isObject;
@@ -380,7 +380,7 @@ function toMinus(n){
 	return -toNumber(n);
 }
 
-function convert(c){
+function $convert(c){
 	switch((c||"").toLowerCase()){
 		case "str":
 		case "string":
@@ -426,7 +426,7 @@ function keys(e){
 // Loop Array ^ Object
 // @use al
 // @use ol
-// @export op
+// @export *op
 // @alias each
 function al(ary,fn,ts){
 	for(var i=0, l=ary.length; i<l; i++)
@@ -450,7 +450,7 @@ function fov(list,fn,ts){
 }
 
 // Loop function
-function op(c){
+function $op(c){
 	switch((c||"").toLowerCase()){
 		case "array":
 			return al;
@@ -558,16 +558,20 @@ function $has(c){
 // @use find
 // @use index
 // @use reject
+// support regexp && value filter
 function filter(list,idf,reskey){
-	var res = [];
+	var res = [], 
+			fn = isDefine(idf,'RegExp') ? cit(regCheck,idf) :
+			(isFn(idf) ? idf : fseq(idf));
 	fov(clone(list),function(val,key,that){
-		if(idf(val,key,that)) this.push(reskey ? key : val);
+		if(fn.apply(that,arguments)) 
+			this.push(reskey ? key : val);
 	},res);
 	return res;
 }
 
-function reject(list,idf){
-	return filter(list,negate(idf));
+function reject(list,idf,reskey){
+	return filter(list,negate(idf),reskey);
 }
 
 // filter indexkey
@@ -575,12 +579,12 @@ function reject(list,idf){
 // @use index
 // @use firstindex
 // @use lastindex
+// @use one
 // @export *index
 //
 // index([1,2,3,1,2,4,1],1) => [0,3,6]
 function index(list,idf){
-	var fn = isFn(idf) ? idf : fseq(idf),
-			res = filter(list,fn,true);
+	var res = filter(list,idf,true);
 	return res.length === 1 ? res.pop() : (res.length ? res : null);
 }
 
@@ -594,12 +598,23 @@ function firstindex(list,idf){
 	return isPrimitive(res) ? res : res.shift();
 }
 
-function Index(c){
+// the one what found in this array [ method ]
+// @fix index
+// export one (single)
+function one(list,idf){
+	var res = firstindex(list,idf);
+	return res === null ? res : list[res];
+}
+
+function $index(c){
 	switch ((c||"").toLowerCase()) {
 		case 'first':
 			return firstindex;
 		case 'last':
 			return lastindex;
+		case 'single':
+		case 'one':
+			return one;
 		default:
 			return index;
 	}
@@ -608,7 +623,7 @@ function Index(c){
 // Get first element in array [ method ]
 // @export last
 // @export first
-// @alias *head
+// @alias *head (first)
 function first(ary){
 	return isArrayLike(ary) ? ary[0] : ary;
 }
@@ -624,7 +639,7 @@ function last(ary){
 // @export map
 function mapValue(list,fn){
 	return fov(clone(list),function(val,key,list){
-		list[key] = this ? fn.call(list,val,key,list) : val[fn];
+		list[key] = this ? fn.apply(list,arguments) : val[fn];
 	},isFn(fn));
 }
 
@@ -633,32 +648,35 @@ function mapValue(list,fn){
 function mapKey(list,fn){
 	var res = {};
 	ol(list,function(val){
-		res[fn.apply(val,arguments)] = val;
+		res[fn.apply(list,arguments)] = val;
 	});
 	return res;
 }
 
-function map(c){
+function $map(c){
 	return c === "key" ? mapKey : mapValue;
 }
 
 // List cat [ method ]
 function cat(list,idf){
-	var res = [];
+	var res = [],
+			fn = isDefine(idf,'RegExp') ? cit(regCheck,idf) :
+			(isFn(idf) ? idf : fseq(idf));
+
 	if(isArray(list)){
 		for(var i=0,l=list.length; i<l; i++)
-			if(idf.call(list,list[i],i,list)){
-				res.push(list.splice(i,1).pop()); i--;
-			}
+			if(fn.call(list,list[i],i,list))
+				res.push(list.splice(i,1).pop(i--));
 	}else if(isObject(list)){
-		for(var j in list)
-			if(list.hasOwnProperty(j))
-				if(idf.call(list,list[j],j,list)){
+		for(var k in list){
+			if(list.hasOwnProperty(k))
+				if(fn.call(list,list[k],k,list)){
 					var po = {};
-					po[j] = list[j];
+					po[k] = list[k];
 					res.push(po);
-					delete list[j];
+					delete list[k];
 				}
+		}
 	}
 	return res;
 }
@@ -674,6 +692,10 @@ function seq(a,b){
 	return a===b;
 }
 
+function nseq(a,b){
+	return a!==b;
+}
+
 function fseq(a){
 	return function(n){
 		return n === a;
@@ -681,7 +703,7 @@ function fseq(a){
 }
 
 function fastUnique(ary){
-	var u = {}, n = typeof ary[0] === 'number';
+	var u = {}, n = typeof first(ary) === 'number';
 
 	for(var i = 0 ; i<ary.length; i++){
 		if(u[ary[i]]) continue;
@@ -700,7 +722,7 @@ function slimUnique(ary,ueq){
 	return c;
 }
 
-function unique(c){
+function $unique(c){
 	return c==="fast" ? fastUnique : slimUnique;
 }
 
@@ -765,7 +787,7 @@ function unpairs(ary){
 	return res;
 }
 
-function pair(c){
+function $pair(c){
 	switch(c){
 		case 'un':
 		case 're':
@@ -800,7 +822,7 @@ function pullWith(ary,it){
 	return isFn(it) ? ary.filter(it) : not(ary,it);
 }
 
-function pull(c){
+function $pull(c){
 	switch((c||"").toLowerCase()){
 		case "at":
 			return pullAt;
@@ -930,7 +952,7 @@ function dropTo(ary,it){
 	return res;
 }
 
-function drop(c){
+function $drop(c){
 	switch((c||"").toLowerCase()){
 		case "left":
 			return dropLeft;
@@ -958,7 +980,7 @@ function flatten(ary,deep){
 
 // TODO 
 // @ add error contruction
-function error(){
+function $error(){
 
 }
 
@@ -1034,7 +1056,7 @@ function randomDice(max){
 	return randomInt(1,(max%2===0?max:max+1));
 }
 
-function random(c){
+function $random(c){
 	switch((c||"").toLowerCase()){
 		case "int" :
 			return randomInt;
@@ -1140,14 +1162,6 @@ function requery(serializea){
 	return res;
 }
 
-// the one what found in this array [ method ]
-// @fix index
-// @export one
-function one(list,fn){
-	for(var i=0, l= list.length; i<l; i++)
-		if(fn.call(list,list[i],i,list)) return list[i];
-}
-
 // URL [param] parse and stringify
 // Browser useful
 // @use paramParse
@@ -1192,7 +1206,7 @@ function paramStringify(param){
 		.replace(whiteSpace,"");
 }
 
-function param(c){
+function $param(c){
 	return c==="parse" ? paramParse : paramStringify;
 }
 
@@ -1293,7 +1307,7 @@ function rize(s,and){
 	});
 }
 
-function string(c){
+function $string(c){
 	switch((c||'').toLowerCase()){
 		case "trim":
 			return trim;
@@ -1359,7 +1373,7 @@ function zipHTML(str){
 	return collapse(str);
 }
 
-function html(c){
+function $html(c){
 	switch((c||"").toLowerCase()){
 		case "encode":
 			return encodeHTML;
@@ -1432,7 +1446,7 @@ function DOOM(txt,name){
 }
 
 // bound DOOM settings
-function doom(config){
+function $doom(config){
 	return DOOM.bind((isDefine(config,"Object"))?
 		depextend(doomSetting,config):
 		doomSetting
@@ -1696,7 +1710,7 @@ function ajaxPOST(url,param,sucess,error){
 	});
 }
 
-function ajax(c){
+function $ajax(c){
 	switch((c||"").toLowerCase()){
 		case "get":
 			return ajaxGET;
@@ -1757,7 +1771,7 @@ function emit(obj,type,fn,args){
 	return obj;
 }
 
-function Event(c){
+function $event(c){
 	switch((c||"").toLowerCase()){
 		case "add":
 			return addEvent;
@@ -1805,7 +1819,7 @@ function unwatch(obj,prop){
 	return obj;
 }
 
-function prop(c){
+function $prop(c){
 	switch((c||"").toLowerCase()){
 		case "watch":
 		case "listen":
@@ -1889,9 +1903,15 @@ function memoize(fn,context){
 
 // create Negate function [ method ]
 function negate(fn,context){
-	return function(){
-		return !fn.apply(context,arguments);
-	};
+	var mapper = isDefine(fn,"RegExp") ? cit(regCheck,fn) : fn;
+	
+	if(isFn(mapper)){
+		return function(){
+			return !mapper.apply(context,arguments);
+		};
+	}
+
+	return cit(nseq,mapper).bind(context);
 }
 
 // create wrapper functions stack [ method ]
@@ -2046,7 +2066,6 @@ var nublist = {
 	auto : auto,
 	part : part,
 	once : once,
-	one : one,
 	eq : eq,
 	asy : asy,
 	cookie : cookie,
@@ -2062,26 +2081,26 @@ var nublist = {
 
 // generator API
 var zublist = {
-	op : op,
-	each : op,
-	map : map,
+	op : $op,
+	each : $op,
+	map : $map,
 	has : $has,
-	type : typeco,
-	html : html,
-	unique : unique,
-	convert: convert,
-	pull : pull,
-	param : param,
-	ajax : ajax,
-	event : Event,
-	prop : prop,
-	drop : drop,
-	pairs : pair,
-	index : Index,
-	random : random,
-	string : string,
-	error : error,
-	doom : doom
+	type : $type,
+	html : $html,
+	unique : $unique,
+	convert: $convert,
+	pull : $pull,
+	param : $param,
+	ajax : $ajax,
+	event : $event,
+	prop : $prop,
+	drop : $drop,
+	pairs : $pair,
+	index : $index,
+	random : $random,
+	string : $string,
+	error : $error,
+	doom : $doom
 };
 // Generators
 // @define base symbol
