@@ -148,6 +148,106 @@ console.time("struct pref");
 		a.equal(eq(cr,[4,5,6]),true,"cat array with Identifier");
 	});
 
+	Q.test(" - [ hook ]",function(a){
+		var hook = struct.hook();
+		var toNumber = struct.convert("number");
+		var arr = ['1','2','3','4','5'];
+		var arr2 = [1,2,3,4,5];
+	
+		a.equal(eq(hook(arr,toNumber),[1,2,3,4,5]),true,"hook arr like map");
+		a.equal(eq(hook(arr,'toString'),arr),true,"hook arr use item's api");
+	});
+
+	Q.test(" - [ pluck ]",function(a){
+		var pluck = struct.pluck();
+		var arr = [{a:1,b:2},{a:2,b:3},{a:3,b:4}];
+		var obj = { a:{a:1,b:2}, b:{a:2,b:3},c:{a:3,b:4} };
+	
+		a.equal(eq(pluck(arr,'a'),[1,2,3]),true,"pluck arr");
+		a.equal(eq(pluck(obj,'a'),[1,2,3]),true,"pluck object");
+	});
+
+	Q.test(" - [ groupBy ]",function(a){
+		var groupBy = struct.groupBy();
+		var o = ['abc','a','sd','bb','c'];
+	
+		a.equal(eq(groupBy(o,'length'),{ '1':['a','c'],'2':['sd','bb'],'3':['abc'] }),true,"groupBy arr");
+	});
+
+	Q.test(" - [ shuffle ]",function(a){
+		var shuffle = struct.shuffle();
+		var arr = ['abc','a','sd','bb','c'];
+	
+		a.equal(eq(shuffle(arr),arr),false,"test shuffle array");
+	});
+
+	Q.test(" - [ chunk ]",function(a){
+		var chunk = struct.chunk();
+		var arr = [1,2,3,4,5];
+	
+		a.equal(eq(chunk(arr),[[1,2],[3,4],[5]]),true,"chunk array with default size");
+		a.equal(eq(chunk(arr,3),[[1,2,3],[4,5]]),true,"chunk with other size");
+	});
+
+	Q.test(" - [ compact ]",function(a){
+		var compact = struct.compact();
+		var arr = [1,2,3,4,5];
+	
+		a.equal(eq(compact([1,'',false,2,undefined,null,[],3]),[1,2,[],3]),true,"compact filter array");
+	});
+
+	Q.test(" - [ diff ]",function(a){
+		var diff = struct.diff();
+		var arr = [1,2,3,4,5];
+		var arr2 = [3,4];
+		var arr3 = [1,3];
+		var arr4 = [2];
+		var no = 5;
+		var str = ['2',1];
+
+		a.equal(eq(diff(arr,arr2,arr3,arr4),[5]),true,"diff array");
+		a.equal(eq(diff(arr,arr2,arr3,no),[2]),true,"diff array with single number");
+		a.equal(eq(diff(arr,arr2,arr4,no,str),['2']),true,"diff array with string");
+	});
+
+	Q.test(" - [ intsec ]",function(a){
+		var intsec = struct.intsec();
+		var arr = [1,2,3,4,5];
+		var arr2 = [1,3,4];
+		var arr3 = [1,3];
+		var arr4 = [2];
+		var no = 5;
+		var no2 = 1;
+		var str = [1,4,'1',5];
+
+		a.equal(eq(intsec(arr,arr2,arr3),[1,3]),true,"intsec array");
+		a.equal(eq(intsec(arr,arr2,arr3,no),[]),true,"intsec array with single number");
+		a.equal(eq(intsec(arr,arr2,arr3,no2,str),[1]),true,"intsec array with string");
+	});
+
+	Q.test(" - [ merge ]",function(a){
+		var merge = struct.merge();
+		var arr = [1,2,3,4,5];
+		var arr2 = [1,3,4];
+		var arr3 = [1,3];
+		var arr4 = [2];
+		var no = 6;
+		var no2 = 1;
+
+		a.equal(eq(merge(arr,arr2,arr3,arr4,no,no2),[1,2,3,4,5,6]),true,"merge array");
+	});
+
+	Q.test(" - [ flat ]",function(a){
+		var flat = struct.flat();
+		var arr = [1,[2,3],[4],5];
+		var arr2 = [1,[3,[4]]];
+		var arr3 = [1,3];
+		var arr4 = 2;
+
+		a.equal(eq(flat(arr,arr2,arr3,arr4),[1,2,3,4,5,1,3,[4],1,3,2]),true,"flat slim copy");
+		a.equal(eq(flat(arr,arr2,arr3,true),[1,2,3,4,5,1,3,4,1,3]),true,"flat with deep done");
+	});
+
 	Q.test(" - [ has(key) ]",function(a){
 		var haskey = struct.has('key');
 		var arr = ['a','b','c','d','e'];
@@ -529,6 +629,93 @@ console.time("struct pref");
 
 		a.equal(eq(fu(arr),[1,2,3,4,5,6,7,8]),true,"unique pure number array");
 		a.equal(eq(fu(arr2),['acd','132','abc','cad']),true,"unique pure string array");
+	});
+
+	Q.test(" - [ pairs(un) ]",function(a){
+		var unpairs = struct.pairs('un');
+		var arr = [['a',1],['b',2]];
+		// unpairs([['a',1],['b',2]]) => {a:1,b:2}
+	
+		a.equal(eq(unpairs(arr),{a:1,b:2}),true,"unpairs array to object");
+	});
+
+	Q.test(" - [ pairs() ]",function(a){
+		var pairs = struct.pairs();
+		var o = {a:1,b:2};
+	
+		a.equal(eq(pairs(o),[['a',1],['b',2]]),true,"groupBy arr");
+	});
+
+	Q.test(" - [ pull(at) ]",function(a){
+		var pull = struct.pull('at');
+		var arr = [1,2,3,4,5];
+	
+		a.equal(eq(pull(arr,[1,2]),[1,4,5]),true,"pull array");
+		a.equal(eq(pull(arr,1,2,4,3),[1]),true,"with mutip arguments");
+	});
+
+	Q.test(" - [ pull(with) ]",function(a){
+		var pullwith = struct.pull('with');
+		var arr = ['1','2',3,4,'d','e'];
+		var arr2 = [3,4,5];
+		var obj = { a:1,b:2,c:3,'123':321 };
+
+		pullwith(obj,321);
+		pullwith(arr2,3);
+		pullwith(arr,/\d/);
+		
+		a.equal(obj['123'],void 0,"not filter obj");
+		a.equal(arr2.length===2&&arr2[0]===4,true,"filter arr");
+		a.equal(arr.length===2&&arr[0]==='d',true,"filter arr with regexp");
+	});
+
+	Q.test(" - [ pull() ]",function(a){
+		var pull = struct.pull();
+		var arr = [1,2,3,2,1,4,5,2,1,3,2,5,2];
+		var arr2 = [1,2,3,2,1,4,'5',2,1,3,2,5,'2'];
+	
+		a.equal(eq(pull(arr,[1,2]),[3, 4, 5, 3, 5]),true,"pull array");
+		a.equal(eq(pull(arr2,1,2,4,3),['5',5,'2']),true,"with mutip arguments");
+	});
+
+	Q.test(" - [ drop(),(left) ]",function(a){
+		var dropLeft = struct.drop('left');
+		var arr = [1,2,3,4,5];
+
+		a.equal(eq(dropLeft(arr),[2,3,4,5]),true,"dropLeft without size");
+		a.equal(eq(dropLeft(arr,4),[5]),true,"dropLeft with size");
+	});
+
+	Q.test(" - [ drop(right) ]",function(a){
+		var dropRight = struct.drop('right');
+		var arr = [1,2,3,4,5];
+
+		a.equal(eq(dropRight(arr),[1,2,3,4]),true,"dropRight without size");
+		a.equal(eq(dropRight(arr,4),[1]),true,"dropRight with size");
+	});
+
+	Q.test(" - [ drop(leftto) ]",function(a){
+		var dlt = struct.drop('lefto');
+		
+		var arr = [4,3,2,1,-1,-2];
+		var str = ['a2c','21b','382','db1'];
+
+		a.equal(eq(dlt(arr,2),[1,-1,-2]),true,"dropLeftTo with value");
+		a.equal(eq(dlt(arr,-1),[-2]),true,"dropLeftTo with minus");
+		a.equal(eq(dlt(arr,function(v){ return v<1; }),[-2]),true,"dropLeft to use ite");
+		a.equal(eq(dlt(str,/^\d+$/),['db1']),true,"dropLeftTo use regexp");
+	});
+
+	Q.test(" - [ drop(rightto) ]",function(a){
+		var drt = struct.drop('righto');
+		
+		var arr = [4,3,2,1,-1,-2];
+		var str = ['a2c','21b','382','db1'];
+
+		a.equal(eq(drt(arr,2),[4,3]),true,"dropRightTo without size");
+		a.equal(eq(drt(arr,-1),[4,3,2,1]),true,"dropRightTo without size");
+		a.equal(eq(drt(arr,function(v){ return v<1; }),[4,3,2,1,-1]),true,"dropRightTo use ite");
+		a.equal(eq(drt(str,/^\d+$/),['a2c','21b']),true,"dropRightTo use regexp");
 	});
 
 }).call(this,QUnit,struct);
