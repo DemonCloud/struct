@@ -6,14 +6,14 @@
   "repository": "https://github.com/DemonCloud/struct",
   "author": "YiJun <cloudywolf1@qq.com>",
   "license": "FAL",
-	"devDependencies": {
-  	"colors":"latest",
+  "devDependencies": {
+    "colors": "latest",
     "gulp": "latest",
     "gulp-concat": "latest",
+    "gulp-eslint": "latest",
+    "gulp-filter": "latest",
     "gulp-optimize-js": "latest",
-    "gulp-filter" : "latest",
-    "gulp-uglify": "latest",
-    "gulp-rename":"latest",
-    "gulp-eslint":"latest"
+    "gulp-rename": "latest",
+    "gulp-uglify": "latest"
   }
 }
