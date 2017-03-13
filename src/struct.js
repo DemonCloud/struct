@@ -191,7 +191,8 @@ function isArrayLike(obj){
 				 isArray(obj) ||
 				 isDefine(obj,"Arguments") ||
 				 isDefine(obj,"NodeList") ||
-				 isDefine(obj,"HTMLCollection"));
+				 isDefine(obj,"HTMLCollection")||
+				 isDefine(obj,"Storage"));
 }
 
 // isNaN [ ES6 Method ]
@@ -727,10 +728,9 @@ function $unique(c){
 
 // advance map [ method ]
 function hook(list,hookname){
-	var args = slice(arguments,2),
-			func = isFn(hookname);
-	return map(list,function(val){
-		return (func ? hookname : v[hookname]).apply(val,args);
+	var func = isFn(hookname);
+	return mapValue(list,function(val){
+		return (func ? hookname : val[hookname]).apply(val,arguments);
 	});
 }
 
@@ -740,7 +740,7 @@ function pluck(list,mapkey){
 	fov(list,function(item){
 		var key = keys(item);
 		for( var i=key.length; i--; )
-			if(key[i]===mapkey+'')
+			if(key[i]===toString(mapkey))
 				this.push(item[key[i]]);
 	},res);
 	return res;
@@ -797,17 +797,16 @@ function $pair(c){
 }
 
 // Pull element form array [ method ]
+// @use not
 // @use pullAll
 // @use pullAt
 // @use flatten
 // @export pull
-//
+
 // pullAll([1,2,3,4,1,2,4],1,4) => [2,3,2];
 function pullAll(ary){
 	var ft = flatten(slice(arguments,1),true);
-	return ary.filter(function(val){
-		return !has(ft,val);
-	});
+	return ary.filter(negate(cit(has,ft)));
 }
 
 function pullAt(ary){
@@ -818,7 +817,7 @@ function pullAt(ary){
 }
 
 function pullWith(ary,it){
-	return isFn(it) ? ary.filter(it) : not(ary,it);
+	return not(ary,it);
 }
 
 function $pull(c){
@@ -860,7 +859,7 @@ function chunk(ary,size){
 
 // Compact array [ method ]
 // save pure number filter the false value
-// compact([1,'',false,2,undefined,null,function(){},[],3]) => [1,2,3]
+// compact([1,'',false,2,undefined,null,[],3]) => [1,2,[],3]
 function compact(ary){
 	return ary.filter(cool);
 }
@@ -902,7 +901,10 @@ function intersection(){
 	al(pact,function(key){
 		var all = true;
 		for(var i=args.length; i--;){
-			if(index(args[i],ite ? cit(ite,key) : key)===null){
+			if(index(
+				isArray(args[i])?args[i]:[args[i]],
+				ite ? cit(ite,key) : key)===null
+			){
 				all = false; break;
 			}
 		}
@@ -928,7 +930,7 @@ function merge(){
 // @use dropRight
 // @use dorpTo
 // @export drop
-//
+
 // dropLeft([1,2,3]) => [2,3]
 function dropLeft(ary,n){
 	return slice(ary,toNumber(n)||1);
@@ -936,14 +938,16 @@ function dropLeft(ary,n){
 
 // dropRight([1,2,3],2) => [1]
 function dropRight(ary,n){
-	return slice(arg,0,-(toNumber(n)||1));
+	return slice(ary,0,-(toNumber(n)||1));
 }
 
 // dropTo([4,3,2,1,-1,-2],2) => [1,-1,-2];
 function dropTo(ary,it){
 	var res = slice(ary),
 			key = this===void 0 ? "shift" : "pop",
-			fn = isFn(it) ? it : cit(eq,it);
+			fn = isDefine(it,'RegExp') ? 
+					 cit(regCheck,it) :
+					 (isFn(it) ? it : fseq(it));
 
 	for(var i=res.length;i--;)
 		if(fn(res[key]())) 
@@ -957,8 +961,10 @@ function $drop(c){
 			return dropLeft;
 		case "right":
 			return dropRight;
+		case "lefto":
 		case "leftto":
 			return dropTo;
+		case "righto":
 		case "rightto":
 			return dropTo.bind(true);
 		default:
@@ -968,8 +974,11 @@ function $drop(c){
 
 // Flatten array *with deep [ method ]
 // flatten([1, [2, [3, [4]], 5]],true) => [1,2,3,4,5]
-function flatten(ary,deep){
-	return slice(ary).reduce(function(flat,toFlat){
+function flatten(){
+	var args = concat.apply([],arguments),
+			deep = isDefine(last(args),'Boolean') ? args.pop() : false;
+
+	return slice(args).reduce(function(flat,toFlat){
 		return flat.concat(deep ? 
 			(isArray(toFlat) ? flatten(toFlat,deep) : toFlat) : 
 			toFlat
@@ -1369,7 +1378,7 @@ function stripHTML(str){
 }
 
 function zipHTML(str){
-	return collapse(str);
+	return collapse(str.replace(commentReg,''));
 }
 
 function $html(c){
@@ -1503,12 +1512,6 @@ function cookie(param){
 // @use ajaxPOST
 // @use JSONP
 // @export ajax
-//
-// *Init set localStorage
-var ls = root.localStorage;
-if(!ls.getItem("_struct"))
-	ls.setItem("_struct","{}");
-
 var MIME = {
 	"application/json" : 1
 };
@@ -1548,11 +1551,17 @@ function aix(option){
 		contentType : true
 	} , options || {} );
 
+	var ls = root.localStorage;
+
 	if(config.cache){
+		// *Init set localStorage
+		if(!ls.getItem("_struct"))
+			ls.setItem("_struct","{}");
+
 		var cache = JSON.parse(ls.getItem("_struct"));
 		var data = cache[config.url || root.location.href.split("#").shift()];
 
-		if(data!=null) 
+		if(data!==void 0) 
 			return config.sucess.call(root,data);
 	}
 	
@@ -1628,7 +1637,7 @@ function aix(option){
 			if(xhr.readyState !== 4 || !xhr.responseText)
 				config.error.call(root,xhr);
 			xhr.abort();
-		},config.timeout*1000||5000);
+		},(toNumber(config.timeout)||5)*1000);
 	}
 
 	return xhr;
@@ -1773,6 +1782,7 @@ function emit(obj,type,fn,args){
 function $event(c){
 	switch((c||"").toLowerCase()){
 		case "add":
+		case "on":
 			return addEvent;
 		case "remove":
 			return removeEvent;
@@ -1849,9 +1859,9 @@ function countBy(ary,by){
 
 // return random element [ method ]
 // auto([1,2,3,4,5]) => random(in ary);
-function auto(ary,size){
-	return toNumber(size) > 1 ? 
-				 slice(shuffle(ary),0,toNumber(size)) : 
+function auto(ary,num){
+	return toNumber(num) > 1 ? 
+				 slice(shuffle(ary),0,toNumber(num)) : 
 				 ary[randomInt(size(ary)-1)];
 }
 
