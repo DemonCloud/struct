@@ -410,6 +410,11 @@ function swap(a,b){
 	a^=b;
 }
 
+// cast arguments to Array
+function castArray(){
+	return slice(arguments);
+}
+
 function slice(ary,n,e){
 	return isArrayLike(ary) ? slc.call(ary,n,e) : [];
 }
@@ -1975,75 +1980,6 @@ chain.prototype.run = function(){
 						 .apply(null,this['-']===void 0 ? arguments : this['-']);
 };
 
-// cast arguments to Array
-function castArray(){
-	return slice(arguments);
-}
-
-// Struct stack [=]
-var stack = function(arr){
-	var ram = arr || [];
-
-	var fireList = [];
-
-	al(ram,function(g){
-		var fn = isFn(g[0]) ? g[0] : noop;
-		var time = toNumber(g[1]);
-
-		var fire = function(args){
-			asy(function(){
-				var next = fireList.pop();
-				var res = fn(args);
-				if(isFn(next)) next(res);
-			});
-		};
-
-		fireList.push(fire);
-	});
-
-	define(this,"=",{
-		value : fireList,
-		writable : true,
-		enumerable: false,
-		configurable: false
-	});
-};
-
-extend(stack.prototype,{
-	noop : function(){
-		this["="] = [];
-		return this;
-	},
-
-	fire : function(args){
-		return this["="].length &&
-			     this["="].pop().call(root,args);
-	},
-
-	add : function(){
-		var args = slice(arguments);
-
-		al(args,function(item){
-			var _this = this;
-
-			if(!isFn(item)&&!isArray(item))
-				throw new ReferenceError("add/push arguments error when assign to stack!");
-			var fn = isArray(item) ? item[0] : item;
-			var time = isArray(item) ? (item[1]||0) : toNumber(item||0);
-
-			var fire = function(args){
-				asy(function(){ 
-					var next = _this["="].pop();
-					var res = fn(args);
-					if(isFn(next)) next(res);
-				},time*1000);
-			};
-
-			this["="].push(fire);
-		},this);
-	}
-});
-
 // signet API
 var nublist = {
 	_         : _,
@@ -2079,7 +2015,6 @@ var nublist = {
 	eq        : eq,
 	asy       : asy,
 	cookie    : cookie,
-	stack     : stack,
 	values    : values,
 	memoize   : memoize,
 	negate    : negate,
