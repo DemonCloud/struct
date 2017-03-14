@@ -718,5 +718,51 @@ console.time("struct pref");
 		a.equal(eq(drt(str,/^\d+$/),['a2c','21b']),true,"dropRightTo use regexp");
 	});
 
+	Q.test(" - [ random(int) ]",function(a){
+		var randomInt = struct.random('int');
+		var val = randomInt(1,5);
+
+		a.equal(val<=5&&val>=1,true,"random Int number");
+		a.equal(val%1===0,true,"random number is int");
+	});
+
+	Q.test(" - [ random(float),(double) ]",function(a){
+		var randomFloat = struct.random('float');
+		var val = randomFloat(1,2);
+
+		a.equal(val<=2&&val>=1,true,"random Float number");
+		a.equal(val%1!==0,true,"random number is int");
+	});
+
+	Q.test(" - [ random(bool),(boolean) ]",function(a){
+		var randomBool = struct.random('bool');
+		var bool = randomBool();
+
+		a.equal(typeof bool === 'boolean',true,"random boolean");
+	});
+
+	Q.test(" - [ random(char),(letter),(character) ]",function(a){
+		var randomChar = struct.random('char');
+		var idf = struct.type('identifier');
+		var char = randomChar();
+
+		a.equal(idf(char),true,"random letter");
+		a.equal(char.length,1,"random letter as length 1");
+	});
+
+	Q.test(" - [ random(hex) ]",function(a){
+		var randomHex = struct.random('hex');
+		var idf = struct.type('identifier');
+		var hex = randomHex();
+
+		a.equal(hex.length,6,"random hex as length 6");
+	});
+
+	Q.test(" - [ random(date) ]",function(a){
+		var randomDate = struct.random('date');
+
+		a.equal(randomDate() instanceof Date,true,"new Date");
+	});
+
 }).call(this,QUnit,struct);
 console.timeEnd("struct pref");

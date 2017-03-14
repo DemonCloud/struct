@@ -156,7 +156,7 @@ function isFn(e){
 
 // Number [ type ]
 function isNumber(e){
-	return +e===e;
+	return typeof e === "number" && +e===e;
 }
 
 // Primitive [ type ]
@@ -281,11 +281,11 @@ function $type(c){
 			return isFn;
 		case "nan":
 			return isNaN;
-		case "primitive":
 		case "prim":
+		case "primitive":
 			return isPrimitive;
-		case "identifier":
 		case "idt":
+		case "identifier":
 			return isIdentifier;
 		case "define":
 			return isDefine;
@@ -1006,16 +1006,18 @@ var rNumber = '0123456789',
 
 // Random static Int [ method ]
 function randomInt(min,max){
-	if(!isNumber(max))
+	if(!isNumber(max)){
 		max = min; min = 0;
+	}
 	return min + Math.floor(Math.random()*(max-min+1));
 }
 
 // Random static Float [ method ]
 function randomFloat(min,max,fix){
-	if(!isNumber(max))
+	if(!isNumber(max)){
 		max = min; min = 0;
-	var num = min + Math.random()*(max-min+1);
+	}
+	var num = Math.random()*(max-min)+min;
 	return toNumber(fix) ? +(num.toFixed(fix)) : num;
 }
 
@@ -1150,7 +1152,6 @@ function eq(x,y){
 			return true;
 		}
 	}
-
 	return false;
 }
 
@@ -1925,7 +1926,6 @@ function negate(fn,context){
 
 // create wrapper functions stack [ method ]
 // args [ ...function ];
-//
 // var a = function(t){ return "<a>"+t+"<a>"}
 // var b = function(t){ return "<b>"+t+"<b>"}
 // var c = function(t){ return "<c>"+t+"<c>"}
