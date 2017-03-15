@@ -1133,7 +1133,7 @@ function before(times,fn){
 // building the (*) times Function
 // base it on _.once  --- underscore.js
 function part(fn,times){
-	return (partial(before,(parseInt(times)||1)+1))(fn);
+	return (partial(before,(toNumber(times)||1)+1))(fn);
 }
 
 // create once function
@@ -1143,11 +1143,10 @@ function once(fn){
 
 // slim equal [ method ]
 function eq(x,y){
-	if((x==null||y==null)||(isPrimitive(x)&&isPrimitive(y)))
+	if(x===y || (isPrimitive(x) && isPrimitive(y)))
 		return x===y;
 	if(ts.call(x) !== ts.call(y))
 		return false;
-
 	if(x.toString() === y.toString()){
 		var xkeys = keys(x) , ykeys = keys(y);
 		if(xkeys.length === ykeys.length){
@@ -1172,7 +1171,7 @@ function asy(fn,time){
 // @export requery
 function requery(serializea){
 	var res = {};
-	al(arr,function(elm){ res[elm.name] = elm.value; });
+	al(serializea,function(elm){ res[elm.name] = elm.value; });
 	return res;
 }
 
@@ -1193,12 +1192,12 @@ function rInsignia(part){
 }
 
 function paramParse(url){
-	var turl = (url || "").split("#").shift();
+	var turl = toString(url).split("#").shift();
 
 	var findQuery = turl.indexOf("?") , match , x = {},
 			param = ~findQuery ? turl.substr(findQuery+1) : turl;
 
-	while( match = qrsReg.exec(param) )
+	while(match = qrsReg.exec(param))
 		x[rSpace(match[1])] = rSpace(match[2]);
 
 	return x;
@@ -1214,14 +1213,26 @@ function paramStringify(param){
 			Cparam[key]
 		);
 
-	return JSON.stringify(Cparam).replace(/[\"\{\}]/g,"")
+	return JSON.stringify(Cparam)
+		.replace(/[\"\{\}]/g,"")
 		.replace(/:/g,"=")
 		.replace(/,/g,"&")
 		.replace(whiteSpace,"");
 }
 
 function $param(c){
-	return c==="parse" ? paramParse : paramStringify;
+	switch((c||"").toLowerCase()){
+		case "parse":
+			return paramParse;
+		case "string":
+		case "stringify":
+		case "serialize":
+			return paramStringify;
+		case "requery":
+			return requery;
+		default:
+			return paramParse;
+	}
 }
 
 // slim Template engine call [ DOOM ]

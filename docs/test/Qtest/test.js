@@ -248,6 +248,59 @@ console.time("struct pref");
 		a.equal(eq(flat(arr,arr2,arr3,true),[1,2,3,4,5,1,3,4,1,3]),true,"flat with deep done");
 	});
 
+	Q.test(" - [ part ]",function(a){
+		var part = struct.part();
+
+		var k = 0;
+		var fn = part(function(){ k++; },5);
+
+		for(var i=0; i<10; i++)
+			fn();
+
+		a.equal(k,5,"only run 5 times");
+	});
+
+	Q.test(" - [ once ]",function(a){
+		var once = struct.once();
+
+		var k = 0;
+		var fn = once(function(){ k++; },5);
+
+		for(var i=0; i<10; i++)
+			fn();
+
+		a.equal(k,1,"only run once times");
+	});
+
+	Q.test(" - [ eq ]",function(a){
+		var p1 = true;
+		var p2 = true;
+		var p3 = 's';
+		var p4 = 'ss';
+		var p5 = { a:1,b:2 };
+		var p6 = { a:1,b:2 };
+		var p7 = [1,2,p6,4];
+		var p8 = [1,2,p5,4];
+		var p9 = ['1',2,p5,'4'];
+		var p10 = [1,2,p5,{ a : p6 },p6,[1,[2,'4'],p5,p7],'2',{ b:[p6,p8],c:'2',d:1 },4];
+		var p11 = [1,2,p6,{ a : p5 },p5,[1,[2,'4'],p6,p8],'2',{ b:[p5,p7],c:'2',d:1 },4];
+		var p12 = '1';
+		var p13 = 1;
+
+		a.equal(eq(p1,p2),true,"eq boolean");
+		a.equal(eq(p2,p3),false,"eq boolean and string");
+		a.equal(eq(p3,p4),false,"diff string");
+		a.equal(eq(p4,ts),false,"diff empty string");
+		a.equal(eq(p5,p5),true,"self equal");
+		a.equal(eq(p5,p6),true,"same values equal");
+		a.equal(eq(p6,p7),false,"not same type value");
+		a.equal(eq(p7,p8),true,"array diff");
+		a.equal(eq(p7,p9),false,"with same string and number in object");
+		a.equal(eq(p8,p9),false,"with same string and number in object");
+		a.equal(eq(p10,p11),true,"deeping equal");
+		a.equal(eq(p12,p13),false,"test no convert type");
+	});
+
 	Q.test(" - [ has(key) ]",function(a){
 		var haskey = struct.has('key');
 		var arr = ['a','b','c','d','e'];
@@ -763,6 +816,7 @@ console.time("struct pref");
 
 		a.equal(randomDate() instanceof Date,true,"new Date");
 	});
+
 
 }).call(this,QUnit,struct);
 console.timeEnd("struct pref");
