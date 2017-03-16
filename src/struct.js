@@ -127,9 +127,8 @@ function citd(fn,check){
 // @ Element [ Node ]
 // @ Native
 // @ *Define [ contain ]
-//
-// @ exprot type[name] 
 
+// @ exprot type[name] 
 var reHostCtor = /^\[object .+?Constructor\]$/,
 		// Compile a regexp using a common native method as a template.
 		// We chose `Object#toString` because there's a good chance it is not being mucked with.
@@ -164,6 +163,7 @@ function isPrimitive(e){
 	return e == null || typeof e !== "object" ;
 }
 
+// Native isArray
 var isArray = Array.isArray;
 
 // Identifier [ type ]
@@ -1164,6 +1164,15 @@ function asy(fn,time){
 	return setTimeout(fn,time||0);
 }
 
+// URL [param] parse and stringify
+// Browser useful
+// @use paramParse
+// @use paramStringify
+// @use requery
+// @export param
+var whiteSpace = /[\t\r\n\f\x20]/g,
+		qrsReg = /([^&=]+)=?([^&]*)/g;
+
 // pack the serializeArray to Object
 // @fix jQuery.serializeArray
 // @fix Zepto.serializeArray
@@ -1174,14 +1183,6 @@ function requery(serializea){
 	al(serializea,function(elm){ res[elm.name] = elm.value; });
 	return res;
 }
-
-// URL [param] parse and stringify
-// Browser useful
-// @use paramParse
-// @use paramStringify
-// @export param
-var whiteSpace = /[\t\r\n\f\x20]/g,
-		qrsReg = /([^&=]+)=?([^&]*)/g;
 
 function rSpace(part){ 
 	return decodeURIComponent(part.replace(/\+/g," ")); 
@@ -1228,6 +1229,7 @@ function $param(c){
 		case "stringify":
 		case "serialize":
 			return paramStringify;
+		case "query":
 		case "requery":
 			return requery;
 		default:
@@ -1287,7 +1289,7 @@ var encodeReg = /[&<">'](?:(amp|lt|quot|gt|#39);)?/g,
 // @use capitalize
 // @use collapse
 // @use rizewith [ default (-) ]
-//
+
 // String trim [ method ]
 function trim(s){
 	return tm.call(s);
@@ -1541,7 +1543,7 @@ function dataMIME(enable,header,param){
 				case 1:
 					return JSON.stringify(param||{});
 				default : 
-					return _.paramstringify(param||{});
+					return paramStringify(param||{});
 			}
 	return param;
 }
@@ -1621,6 +1623,9 @@ function aix(option){
 			xhr.setRequestHeader(key,val);
 		});
 	}
+
+	xhr.setRequestHeader("X-Requested-With","XMLHttpRequest");
+	xhr.setRequestHeader("Struct-Requested","StructHttpRequest");
 
 	xhr.onreadystatechange = function(event){
 		// response HTTP response header 200 or lower 300
@@ -1803,6 +1808,8 @@ function $event(c){
 			return addEvent;
 		case "remove":
 			return removeEvent;
+		case "emit":
+			return emit;
 		default:
 			return emit;
 	}
