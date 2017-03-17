@@ -6,6 +6,9 @@
   "repository": "https://github.com/DemonCloud/struct",
   "author": "YiJun <cloudywolf1@qq.com>",
   "license": "FAL",
+  "scripts":{
+  	"start":"browser-sync start --server --files *.*"
+  },
   "devDependencies": {
     "colors": "latest",
     "gulp": "latest",
@@ -14,6 +17,7 @@
     "gulp-filter": "latest",
     "gulp-optimize-js": "latest",
     "gulp-rename": "latest",
-    "gulp-uglify": "latest"
+    "gulp-uglify": "latest",
+    "browser-sync": "latest"
   }
 }
