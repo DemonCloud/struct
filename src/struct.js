@@ -86,8 +86,7 @@ function extend(o1,o2,nothisproperty){
 
 // extend object or define module for struct
 function depextend(a,b,nothisproperty){
-	var c = isArrayLike(a) ? clone : depclone;
-	return extend(c(a),c(b),nothisproperty);
+	return extend(extend(isArrayLike(a)?[]:{},a),b,nothisproperty);
 }
 
 // define Property [ ES5 method ]
@@ -267,47 +266,6 @@ function typec(e){
 	return typeArray[index(types,fseq(true))] || "object"; 
 }
 
-// Type export
-function $type(c){
-	switch((c||"").toLowerCase()){
-		case "object":
-			return isObject;
-		case "array":
-			return isArray;
-		case "arraylike":
-			return isArrayLike;
-		case "function":
-		case "fn":
-			return isFn;
-		case "nan":
-			return isNaN;
-		case "prim":
-		case "primitive":
-			return isPrimitive;
-		case "idt":
-		case "identifier":
-			return isIdentifier;
-		case "define":
-			return isDefine;
-		case "int":
-			return isInt;
-		case "float":
-		case "double":
-			return isFloat;
-		case "date":
-			return isDate;
-		case "empty":
-			return isEmpty;
-		case "dom":
-		case "elm":
-		case "element":
-			return isElement;
-		case "native":
-			return isNative;
-		default:
-			return typec;
-	}
-}
 
 // Optimze V8 compress
 // check form bluebird.js ( miss *ASSERT checker )
@@ -380,28 +338,6 @@ function toMinus(n){
 	return -toNumber(n);
 }
 
-function $convert(c){
-	switch((c||"").toLowerCase()){
-		case "str":
-		case "string":
-			return toString;
-		case "num":
-		case "number":
-			return toNumber;
-		case "arr":
-		case "array":
-			return toArray;
-		case "hex":
-			return toHEX;
-		case "rgb":
-			return toRGB;
-		case "minus":
-			return toMinus;
-		default:
-			return toString;
-	}
-}
-
 // XOR operation, 
 // details: http://en.wikipedia.org/wiki/XOR_swap_algorithm
 function swap(a,b){
@@ -454,18 +390,6 @@ function fov(list,fn,ts){
 	return list;
 }
 
-// Loop function
-function $op(c){
-	switch((c||"").toLowerCase()){
-		case "array":
-			return al;
-		case "object":
-			return ol;
-		default :
-			return fov;
-	}
-}
-
 // Simple Clone [ fast , signet ]
 // @use depclone
 // @export *clone
@@ -488,11 +412,11 @@ function depclone(l){
 	if(isArrayLike(l)){
 		// clone array 
 		return slice(l).map(citd(depclone,negate(isPrimitive)));
-	}else if(!isPrimitive(l)){
+	}else if(!isPrimitive(l) && !(l instanceof Node)){
 		// clone object ^ with copy prototype
-		var $ = function(){};
-		$.prototype = l.constructor.prototype;
-		res = new $();
+		var _ = function(){};
+		_.prototype = l.constructor.prototype;
+		res = new _;
 		// dist clone data
 		ol(l, function(val,key){
 			this[key] = isPrimitive(val) ? val : depclone(val);
@@ -554,10 +478,6 @@ function not(list,n,useq){
 	return list;
 }
 
-function $has(c){
-	return c==="key" ? hasKey : has;
-}
-
 // List filter [ method ]
 // @use filter
 // @use find
@@ -611,20 +531,6 @@ function one(list,idf){
 	return res === null ? res : list[res];
 }
 
-function $index(c){
-	switch ((c||"").toLowerCase()) {
-		case 'first':
-			return firstindex;
-		case 'last':
-			return lastindex;
-		case 'single':
-		case 'one':
-			return one;
-		default:
-			return index;
-	}
-}
-
 // Get first element in array [ method ]
 // @export last
 // @export first
@@ -656,10 +562,6 @@ function mapKey(list,fn){
 		res[fn.apply(list,arguments)] = val;
 	});
 	return res;
-}
-
-function $map(c){
-	return c === "key" ? mapKey : mapValue;
 }
 
 // List cat [ method ]
@@ -727,10 +629,6 @@ function slimUnique(ary,ueq){
 	return c;
 }
 
-function $unique(c){
-	return c==="fast" ? fastUnique : slimUnique;
-}
-
 // advance map [ method ]
 function hook(list,hookname){
 	var func = isFn(hookname);
@@ -791,16 +689,6 @@ function unpairs(ary){
 	return res;
 }
 
-function $pair(c){
-	switch(c){
-		case 'un':
-		case 're':
-			return unpairs;
-		default:
-			return pairs;
-	}
-}
-
 // Pull element form array [ method ]
 // @use not
 // @use pullAll
@@ -823,17 +711,6 @@ function pullAt(ary){
 
 function pullWith(ary,it){
 	return not(ary,it);
-}
-
-function $pull(c){
-	switch((c||"").toLowerCase()){
-		case "at":
-			return pullAt;
-		case "with":
-			return pullWith;
-		default:
-			return pullAll;
-	}
 }
 
 // Array Disorder
@@ -959,24 +836,6 @@ function dropTo(ary,it){
 			break;
 	return res;
 }
-
-function $drop(c){
-	switch((c||"").toLowerCase()){
-		case "left":
-			return dropLeft;
-		case "right":
-			return dropRight;
-		case "lefto":
-		case "leftto":
-			return dropTo;
-		case "righto":
-		case "rightto":
-			return dropTo.bind(true);
-		default:
-			return dropLeft;
-	}
-}
-
 // Flatten array *with deep [ method ]
 // flatten([1, [2, [3, [4]], 5]],true) => [1,2,3,4,5]
 function flatten(){
@@ -989,12 +848,6 @@ function flatten(){
 			toFlat
 		); 
 	},[]);
-}
-
-// TODO 
-// @ add error contruction
-function $error(){
-
 }
 
 // Chance random with any construction
@@ -1071,32 +924,6 @@ function randomDice(max){
 	return randomInt(1,(max%2===0?max:max+1));
 }
 
-function $random(c){
-	switch((c||"").toLowerCase()){
-		case "int" :
-			return randomInt;
-		case "float":
-		case "double":
-			return randomFloat;
-		case "string":
-			return randomString;
-		case "bool":
-		case "boolean":
-			return randomBool;
-		case "char":
-		case "character":
-		case "letter":
-			return randomCharacter;
-		case "date":
-			return randomDate;
-		case "hex":
-			return randomHex;
-		case "dice":
-			return randomDice;
-		default:
-			return Math.random;
-	}
-}
 // Create Function caller [ method ]
 // @use partial
 // @use before
@@ -1221,22 +1048,6 @@ function paramStringify(param){
 		.replace(whiteSpace,"");
 }
 
-function $param(c){
-	switch((c||"").toLowerCase()){
-		case "parse":
-			return paramParse;
-		case "string":
-		case "stringify":
-		case "serialize":
-			return paramStringify;
-		case "query":
-		case "requery":
-			return requery;
-		default:
-			return paramParse;
-	}
-}
-
 // slim Template engine call [ DOOM ]
 var no = "(.)^";
 var ecode = {
@@ -1334,31 +1145,6 @@ function rize(s,and){
 	});
 }
 
-function $string(c){
-	switch((c||'').toLowerCase()){
-		case "trim":
-			return trim;
-		case "trimleft":
-			return trimLeft;
-		case "trimright":
-			return trimRight;
-		case "came":
-		case "camelize":
-			return camelize;
-		case "capit":
-		case "capital":
-		case "capitalize":
-			return capitalize;
-		case "collapse":
-			return collapse;
-		case "rize":
-		case "rizewith":
-			return rize;
-		default:
-			return toString;
-	}
-}
-
 // const DOOM4 settings
 // rule for parse Template
 var doomSetting  = {
@@ -1398,21 +1184,6 @@ function stripHTML(str){
 
 function zipHTML(str){
 	return collapse(str.replace(commentReg,''));
-}
-
-function $html(c){
-	switch((c||"").toLowerCase()){
-		case "encode":
-			return encodeHTML;
-		case "decode":
-			return decodeHTML;
-		case "strip":
-			return stripHTML;
-		case "zip":
-			return zipHTML;
-		default:
-			return wrap(stripHTML,zipHTML);
-	}
 }
 
 // ID Form GAME - [[ DOOM4 ]]
@@ -1470,14 +1241,6 @@ function DOOM(txt,name){
 				[data,struct].concat(slice(arguments,1))
 			));
 	};
-}
-
-// bound DOOM settings
-function $doom(config){
-	return DOOM.bind((isDefine(config,"Object"))?
-		depextend(doomSetting,config):
-		doomSetting
-	);
 }
 
 // Browser cookie
@@ -1740,19 +1503,6 @@ function ajaxPOST(url,param,sucess,error){
 	});
 }
 
-function $ajax(c){
-	switch((c||"").toLowerCase()){
-		case "get":
-			return ajaxGET;
-		case "post":
-			return ajaxPOST;
-		case "jsonp":
-			return JSONP;
-		default:
-			return aix;
-	}
-}
-
 // Struct Events 
 // object add custom event, use [ emit ] to trigger
 // @use addEvent
@@ -1787,6 +1537,14 @@ function removeEvent(obj,type,fn){
 }
 
 function emit(obj,type,fn,args){
+	return al(
+		toString(type).split(","),
+		function(t){ fireEvent(this,trim(t),fn,args) },
+		obj
+	);
+}
+
+function fireEvent(obj,type,fn,args){
 	var hasFn = isFn(fn);
 
 	if(isArray(fn) && !args){
@@ -1798,21 +1556,6 @@ function emit(obj,type,fn,args){
 		ol(obj._events[type],function(f){
 			if(f===fn||!hasFn) f.apply(obj,args||[]);
 		});
-	return obj;
-}
-
-function $event(c){
-	switch((c||"").toLowerCase()){
-		case "add":
-		case "on":
-			return addEvent;
-		case "remove":
-			return removeEvent;
-		case "emit":
-			return emit;
-		default:
-			return emit;
-	}
 }
 
 // Struct Prop listener
@@ -1850,19 +1593,6 @@ function unwatch(obj,prop){
 	delete obj[prop]; 
 	obj[prop] = val;
 	return obj;
-}
-
-function $prop(c){
-	switch((c||"").toLowerCase()){
-		case "watch":
-		case "listen":
-			return watch;
-		case "unwatch":
-		case "unlisten":
-			return unwatch;
-		default:
-			return getProp;
-	}
 }
 
 // countBy [ method ]
@@ -1998,6 +1728,286 @@ chain.prototype.run = function(){
 						 .apply(null,this['-']===void 0 ? arguments : this['-']);
 };
 
+// Type export
+function $type(c){
+	switch((c||"").toLowerCase()){
+		case "object":
+			return isObject;
+		case "array":
+			return isArray;
+		case "arraylike":
+			return isArrayLike;
+		case "function":
+		case "fn":
+			return isFn;
+		case "nan":
+			return isNaN;
+		case "prim":
+		case "primitive":
+			return isPrimitive;
+		case "idt":
+		case "identifier":
+			return isIdentifier;
+		case "define":
+			return isDefine;
+		case "int":
+			return isInt;
+		case "float":
+		case "double":
+			return isFloat;
+		case "date":
+			return isDate;
+		case "empty":
+			return isEmpty;
+		case "dom":
+		case "elm":
+		case "element":
+			return isElement;
+		case "native":
+			return isNative;
+		default:
+			return typec;
+	}
+}
+
+function $convert(c){
+	switch((c||"").toLowerCase()){
+		case "str":
+		case "string":
+			return toString;
+		case "num":
+		case "number":
+			return toNumber;
+		case "arr":
+		case "array":
+			return toArray;
+		case "hex":
+			return toHEX;
+		case "rgb":
+			return toRGB;
+		case "minus":
+			return toMinus;
+		default:
+			return toString;
+	}
+}
+
+// Loop function
+function $op(c){
+	switch((c||"").toLowerCase()){
+		case "array":
+			return al;
+		case "object":
+			return ol;
+		default :
+			return fov;
+	}
+}
+
+function $has(c){
+	return c==="key" ? hasKey : has;
+}
+
+function $index(c){
+	switch ((c||"").toLowerCase()) {
+		case 'first':
+			return firstindex;
+		case 'last':
+			return lastindex;
+		case 'single':
+		case 'one':
+			return one;
+		default:
+			return index;
+	}
+}
+
+function $map(c){
+	return c === "key" ? mapKey : mapValue;
+}
+
+function $unique(c){
+	return c==="fast" ? fastUnique : slimUnique;
+}
+
+function $pair(c){
+	switch(c){
+		case 'un':
+		case 're':
+			return unpairs;
+		default:
+			return pairs;
+	}
+}
+
+function $pull(c){
+	switch((c||"").toLowerCase()){
+		case "at":
+			return pullAt;
+		case "with":
+			return pullWith;
+		default:
+			return pullAll;
+	}
+}
+
+function $drop(c){
+	switch((c||"").toLowerCase()){
+		case "left":
+			return dropLeft;
+		case "right":
+			return dropRight;
+		case "lefto":
+		case "leftto":
+			return dropTo;
+		case "righto":
+		case "rightto":
+			return dropTo.bind(true);
+		default:
+			return dropLeft;
+	}
+}
+
+// TODO 
+// @ add error contruction
+function $error(){
+
+}
+
+function $random(c){
+	switch((c||"").toLowerCase()){
+		case "int" :
+			return randomInt;
+		case "float":
+		case "double":
+			return randomFloat;
+		case "string":
+			return randomString;
+		case "bool":
+		case "boolean":
+			return randomBool;
+		case "char":
+		case "character":
+		case "letter":
+			return randomCharacter;
+		case "date":
+			return randomDate;
+		case "hex":
+			return randomHex;
+		case "dice":
+			return randomDice;
+		default:
+			return Math.random;
+	}
+}
+
+function $param(c){
+	switch((c||"").toLowerCase()){
+		case "parse":
+			return paramParse;
+		case "string":
+		case "stringify":
+		case "serialize":
+			return paramStringify;
+		case "query":
+		case "requery":
+			return requery;
+		default:
+			return paramParse;
+	}
+}
+
+function $html(c){
+	switch((c||"").toLowerCase()){
+		case "encode":
+			return encodeHTML;
+		case "decode":
+			return decodeHTML;
+		case "strip":
+			return stripHTML;
+		case "zip":
+			return zipHTML;
+		default:
+			return wrap(stripHTML,zipHTML);
+	}
+}
+
+function $string(c){
+	switch((c||'').toLowerCase()){
+		case "trim":
+			return trim;
+		case "trimleft":
+			return trimLeft;
+		case "trimright":
+			return trimRight;
+		case "came":
+		case "camelize":
+			return camelize;
+		case "capit":
+		case "capital":
+		case "capitalize":
+			return capitalize;
+		case "collapse":
+			return collapse;
+		case "rize":
+		case "rizewith":
+			return rize;
+		default:
+			return toString;
+	}
+}
+
+function $ajax(c){
+	switch((c||"").toLowerCase()){
+		case "get":
+			return ajaxGET;
+		case "post":
+			return ajaxPOST;
+		case "jsonp":
+			return JSONP;
+		default:
+			return aix;
+	}
+}
+
+function $event(c){
+	switch((c||"").toLowerCase()){
+		case "add":
+		case "on":
+		case "bind":
+			return addEvent;
+		case "remove":
+		case "unbind":
+			return removeEvent;
+		case "dispatch":
+		case "emit":
+			return emit;
+		default:
+			return emit;
+	}
+}
+
+function $prop(c){
+	switch((c||"").toLowerCase()){
+		case "watch":
+		case "listen":
+			return watch;
+		case "unwatch":
+		case "unlisten":
+			return unwatch;
+		default:
+			return getProp;
+	}
+}
+
+// bound DOOM settings
+function $doom(config){
+	return DOOM.bind((isDefine(config,"Object"))?
+		depextend(doomSetting,config):
+		doomSetting
+	);
+}
+
 // signet API
 var nublist = {
 	_         : _,
@@ -2010,6 +2020,7 @@ var nublist = {
 	depclone  : depclone,
 	not       : not,
 	cat       : cat,
+	slice     : slice,
 	find      : filter,
 	filter    : filter,
 	reject    : reject,
@@ -2065,6 +2076,7 @@ var zublist = {
 	error   : $error,
 	doom    : $doom
 };
+
 // Generators
 // @define base symbol
 ol(nublist,function(fn,key){
@@ -2081,6 +2093,7 @@ ol(zublist,function(fn,key){
 	zub.apply(null,arguments);
 });
 
+struct.root = root;
 struct.toString = toString;
 struct.broken = broken;
 struct.prototype = struct.__proto__ = null;
