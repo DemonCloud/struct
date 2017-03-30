@@ -817,6 +817,120 @@ console.time("struct pref");
 		a.equal(randomDate() instanceof Date,true,"new Date");
 	});
 
+	Q.test(" - [ param(parse) ]",function(a){
+		var parse = struct.param("parse");
+
+		var url1 = "https://www.google.com.sg/?gfe_rd=cr&ei=pX3bWLb8FaLnugS8iYqoAg";
+		var url2 = "wd=wow%20178&rsv_spt=1&rsv_iqid=0x9f8c1cff00034e6e&issp=1&f=8&rsv_bp=1&rsv_idx=2&ie=utf-8&rqlang=cn&tn=baiduhome_pg&rsv_enter=1";
+
+		a.equal(eq(parse(url1),{
+			gfe_rd:"cr",
+			ei:"pX3bWLb8FaLnugS8iYqoAg"
+		}),true,"test url1");
+
+		a.equal(eq(parse(url2),{
+			f:"8",
+			ie:"utf-8",
+			issp:"1",
+			rqlang:"cn",
+			rsv_bp:"1",
+			rsv_enter:"1",
+			rsv_idx:"2",
+			rsv_iqid:"0x9f8c1cff00034e6e",
+			rsv_spt:"1",
+			tn:"baiduhome_pg",
+			wd:"wow 178"
+		}),true,"test url2");
+	});
+
+	Q.test(" - [ param(stringify),(string),(serialize) ]",function(a){
+		var sfy = struct.param("stringify");
+		
+		a.equal(eq(sfy({
+			wd:"wow 178",
+			rsv_spt:"1",
+			rsv_iqid:"0x9f8c1cff00034e6e",
+			issp:"1",
+			f:"8",
+			rsv_bp:"1",
+			rsv_idx:"2",
+			ie:"utf-8",
+			rqlang:"cn",
+			tn:"baiduhome_pg",
+			rsv_enter:"1"
+		}),"wd=wow%20178&rsv_spt=1&rsv_iqid=0x9f8c1cff00034e6e&issp=1&f=8&rsv_bp=1&rsv_idx=2&ie=utf-8&rqlang=cn&tn=baiduhome_pg&rsv_enter=1"),true,"stringify param");
+	});
+
+	Q.test(" - [ param(requery),(query) ]",function(a){
+		var query = struct.param("query");
+		var sdata = [
+			{name:"abc",value:"213"},
+			{name:"bca",value:"321"},
+			{name:"cab",value:"231"}
+		];
+	
+		a.equal(eq(query(sdata),{
+			abc:"213",
+			bca:"321",
+			cab:"231"
+		}),true,"query serializeArray Data");
+	});
+
+	Q.test(" - [ string(trim) ]",function(a){
+		var trim = struct.string("trim");
+		
+		var str = "abc",
+				str2 = "abc ",
+				str3 = " abc",
+				str4 = "  abc   ";
+		
+		a.equal(trim(str2),str,"trim right");
+		a.equal(trim(str3),str,"trim left");
+		a.equal(trim(str4),str,"trim all");
+		a.equal(str3," abc","not change orgin");
+	});
+
+	Q.test(" - [ string(trimleft) ]",function(a){
+		var trim = struct.string("trimleft");
+		
+		var str = "abc",
+				str3 = " abc";
+		
+		a.equal(trim(str3),str,"trim left");
+	});
+
+	Q.test(" - [ string(trim) ]",function(a){
+		var trim = struct.string("trimright");
+		
+		var str = "abc",
+				str2 = "abc ";
+		
+		a.equal(trim(str2),str,"trim right");
+	});
+
+	Q.test(" - [ string(camelize),(came) ]",function(a){
+		var came = struct.string("camelize");
+	
+		var str = "font-size",
+				str2 = "backEnd",
+				str3 = "back-space";
+
+		a.equal(came(str),"fontSize","camelize css");
+		a.equal(came(str2),"backEnd","do not with camestring");
+		a.equal(came(str3),"backSpace","camelize string");
+	});
+
+	Q.test(" - [ string(capitalize),(capit) ]",function(a){
+		var capit = struct.string("capitalize");
+	
+		var str = "font-size",
+				str2 = "backEnd",
+				str3 = "back-space";
+
+		a.equal(capit(str),"Font-size","capitlize css");
+		a.equal(capit(str2),"BackEnd","capit word");
+		a.equal(capit(str3),"Back-space","capit word");
+	});
 
 }).call(this,QUnit,struct);
 console.timeEnd("struct pref");

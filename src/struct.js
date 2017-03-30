@@ -845,9 +845,7 @@ function flatten(){
 
 	return slice(args).reduce(function(flat,toFlat){
 		return flat.concat(deep ? 
-			(isArray(toFlat) ? flatten(toFlat,deep) : toFlat) : 
-			toFlat
-		); 
+			(isArray(toFlat) ? flatten(toFlat,deep) : toFlat) : toFlat); 
 	},[]);
 }
 
@@ -1942,7 +1940,6 @@ function $string(c){
 		case "camelize":
 			return camelize;
 		case "capit":
-		case "capital":
 		case "capitalize":
 			return capitalize;
 		case "collapse":
