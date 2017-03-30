@@ -1563,9 +1563,39 @@ function fireEvent(obj,type,fn,args){
 // @use watch [ listen ]
 // @use unwatch [ unlisten ]
 // @exprot prop
+
+// define deeping getProp method
 function getProp(obj,prop){
-	if(obj.hasOwnProperty(prop))
-		return obj[prop];
+	var tmp,keygen = (prop||"").split(".");
+	if(keygen.length === 1){
+		if(obj.hasOwnProperty(prop))
+			tmp = obj[prop];
+	}else{
+		// [a.b.2]
+		tmp = obj;
+		for(var i=0;i<keygen.length;i++){
+			tmp = tmp[keygen[i]]; 
+			if(isPrimitive(tmp)) 
+				break;
+		}
+	}
+	return tmp;
+}
+
+function setProp(obj,prop,value){
+	var tmp,end,keygen = (prop||"").split(".");
+	if(keygen.length === 1){
+		if(obj.hasOwnProperty(prop))
+			obj[prop] = value;
+	}else{
+		// [a.b.2]
+		tmp = obj;
+		end = keygen.pop();
+		for(var i=0;i<keygen.length;i++)
+			tmp = tmp[keygen[i]]; 
+		tmp[end] = value;
+	}
+	return obj;
 }
 
 function watch(obj,prop,handle){
@@ -1985,6 +2015,10 @@ function $event(c){
 
 function $prop(c){
 	switch((c||"").toLowerCase()){
+		case "get":
+			return getProp;
+		case "set":
+			return setProp;
 		case "watch":
 		case "listen":
 			return watch;
