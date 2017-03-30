@@ -899,7 +899,7 @@ console.time("struct pref");
 		a.equal(trim(str3),str,"trim left");
 	});
 
-	Q.test(" - [ string(trim) ]",function(a){
+	Q.test(" - [ string(trimright) ]",function(a){
 		var trim = struct.string("trimright");
 		
 		var str = "abc",
@@ -930,6 +930,28 @@ console.time("struct pref");
 		a.equal(capit(str),"Font-size","capitlize css");
 		a.equal(capit(str2),"BackEnd","capit word");
 		a.equal(capit(str3),"Back-space","capit word");
+	});
+
+	Q.test(" - [ string(collapse)] ",function(a){
+		var col = struct.string("collapse");
+	
+		var str = "  abc span  wdsd  eead ddddf>eq  ";
+		var str2 = "<div> <img  src='' alt='sa d'  ><div> </ div> < /div >";
+		a.equal(col(str),"abc span wdsd eead ddddf>eq","collapse string");
+		a.equal(col(str2),"<div><img src='' alt='sa d'><div></div></div>","collapse html");
+	});
+
+	Q.test(" - [ string(rize),(rizewith)] ",function(a){
+		var rize = struct.string("rize");
+	
+		var str = "fontSize";
+		var str2 = "colorPicker";
+		var str3 = "SmallHellBound";
+
+		a.equal(rize(str),"font-size","rize css");
+		a.equal(rize(str2),"color-picker","rize custom string");
+		a.equal(rize(str3,'_'),"small_hell_bound","rize with underscore split");
+		a.equal(rize(str3,'-',true),"Small-Hell-Bound","rize with uppercase cover");
 	});
 
 }).call(this,QUnit,struct);

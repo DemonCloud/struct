@@ -1089,7 +1089,7 @@ var encodeReg = /[&<">'](?:(amp|lt|quot|gt|#39);)?/g,
 		tagCenterReg = new RegExp('>'+sReg+'<','g'),
 		tagLeftReg = new RegExp('<'+sReg,'g'),
 		tagRightReg = new RegExp(sReg+'>','g'),
-		tagCloseReg = new RegExp('<'+sReg+'\/'+sReg,'g');
+		tagCloseReg = new RegExp('<\/'+sReg,'g');
 
 // String Methods 
 // @use trim
@@ -1129,7 +1129,7 @@ function capitalize(s){
 }
 
 function collapse(s){
-	return s.replace(zipReg,'')
+	return trim(s).replace(zipReg,'')
 					.replace(collapseReg,' ')
 					.replace(tagCenterReg,'><')
 					.replace(tagLeftReg,'<')
@@ -1137,10 +1137,11 @@ function collapse(s){
 					.replace(tagCloseReg,'</');
 }
 
-function rize(s,and){
-	and = toString(and) || '-'; 
+function rize(s,and,upper){
+	var cmd = upper ? "toUpperCase" : "toLowerCase",
+		c = toString(and) || '-'; 
 	return s.replace(upperReg,function(charz,index){
-		return (index>0 ? and : '') + charz.toLowerCase();
+		return (index>0 ? c : '') + charz[cmd]();
 	});
 }
 
@@ -1201,7 +1202,7 @@ function DOOM(txt,name){
 						"|" + (this.evaluate||no) +"|$","g");
 
 	// start replace
-	stripHTML(txt).replace( exp, function(match,escape,interpolate,evaluate,offset){
+	zipHTML(txt).replace(exp, function(match,escape,interpolate,evaluate,offset){
 		res += txt.slice(position,offset).replace(escaper,c_escape);
 		// refresh index where to find text string
 		position = offset + match.length;
@@ -1248,7 +1249,7 @@ function DOOM(txt,name){
 function cookieParse(ckstr){
 	var tmp, res={}, pars = ckstr ? ckstr.split(";") : [];
 
-	fov(pars, function(item){
+	al(pars, function(item){
 		var ind = (item||"").search("=");
 
 		if(!~ind) return;
