@@ -28,7 +28,7 @@
 	if(typeof define === 'function' && define.amd)
 		// Ruler by UMD Javascript
 		// support AMD define
-		define(function(){ return factory(struct); });
+		define('struct',[],function(){ return factory(struct); });
 	else if(typeof exports === "object" && typeof module !== "undefined")
 		// support CommonJS exports
 		module.exports = factory(struct);
@@ -53,7 +53,7 @@ var or = {},
     cot = ar.concat,
   	ev = eval,
 
-  	broken = {};
+  	broken = Object.freeze({});
 
 // strict mode hack this
 // hack* =>
@@ -1202,7 +1202,7 @@ function DOOM(txt,name){
 						"|" + (this.evaluate||no) +"|$","g");
 
 	// start replace
-	zipHTML(txt).replace(exp, function(match,escape,interpolate,evaluate,offset){
+	txt.replace(exp, function(match,escape,interpolate,evaluate,offset){
 		res += txt.slice(position,offset).replace(escaper,c_escape);
 		// refresh index where to find text string
 		position = offset + match.length;
@@ -1213,20 +1213,26 @@ function DOOM(txt,name){
 		else if(interpolate)
 			res += "'+((_t=(" + interpolate + "))==null?'':_t)+'";
 		else if(evaluate)
-			res += "';" + evaluate + "_p+='";
+			res += "';\n" + evaluate + "\n_p+='";
 
 		return match;
 	});
 
 	// End wrap res@ String
 	res += "';";
-	if(!name) res = "with(_x||{}){" + res + "}";
-	res = "var _t,_= struct.html('encode'),_p='';" + res + "return _p;";
+	if(!name) res = "with(_x||{}){\n" + res + "\n}";
+	res = "var _t,_= struct.html('encode'),_p='';\n" + res + "\nreturn _p;";
 
 	// Complete building Function string
 	// try to build anmousyous function
 	try{
-		render = ev("(function("+(name||"_x") + ",struct" + ( args.length ? ","+args.toString() : "" ) + "){" + res + "})");
+		render = ev(
+			"(function("+(name||"_x")+
+			",struct"+
+			(args.length ? ","+args.toString() : "")+"){"+ 
+			res + 
+			"})"
+		);
 	}catch(e){
 		e.res = res;
 		throw e;
@@ -1331,7 +1337,7 @@ function aix(option){
 		timeout   : 0,
 		aysnc     : true,
 		contentType : true
-	} , options || {} );
+	} , option || {} );
 
 	var ls = root.localStorage;
 
@@ -1723,6 +1729,17 @@ function wrap(){
 	}; 
 }
 
+function sort(ary,key){
+	if(isObject(ary)&&!isArray(ary)&&typeof key === "string"){
+		var target = getProp(ary,key);
+		return target.sort.apply(target,slice(arguments,2)),ary;
+	}
+
+	if(isArray(ary))
+		return ary.sort.apply(ary,slice(arguments,1));
+	return ary;
+}
+
 // _ chain stack [ method ]
 // @use wrap
 // @use chain
@@ -2062,6 +2079,7 @@ var nublist = {
 	pluck     : pluck,
 	groupBy   : groupBy,
 	countBy   : countBy,
+	concat    : concat,
 	castArray : castArray,
 	shuffle   : shuffle,
 	first     : first,
@@ -2080,6 +2098,7 @@ var nublist = {
 	wrap      : wrap,
 	size      : size,
 	now       : now,
+	sort      : sort,
 	v8        : v8
 };
 
