@@ -20,7 +20,6 @@
  * @Author  : YiJun
  * @Date    : 2017.2.28 - now
  * @License : FAL
- *
  */
 
 (function(root,struct,factory){
@@ -441,13 +440,9 @@ function regCheck(reg,n){
 function has(list,n,ueq){
 	var compare = isDefine(n,"RegExp") ? regCheck : (ueq ? eq : seq),
 			idf = false , key = isPrimitive(list) ? [] : keys(list);
-
-	for(var i=key.length; i--;){
-		if(compare(n,list[key[i]])){
-			idf = true; break;
-		}
-	}
-
+	for(var i=key.length; i--;)
+		if((idf=compare(n,list[key[i]])))
+			break;
 	return idf;
 }
 
@@ -470,12 +465,10 @@ function not(list,n,useq){
 	var check = isDefine(n,"RegExp") ? regCheck : (useq ? eq : seq),
 			isarr = isArray(list),
 			p = keys(list);
-
 	for(var i=0 ; i<p.length ; i++)
 		if(check(n,list[p[i]]))
 			if(notdel(list,p[i],isarr) && isarr)
 				p.pop(i--);
-	
 	return list;
 }
 
@@ -498,6 +491,22 @@ function filter(list,idf,reskey){
 
 function reject(list,idf,reskey){
 	return filter(list,negate(idf),reskey);
+}
+
+function every(list,idf){
+	var res = true;
+	for(var key = keys(list),i=keys.length;i--;)
+		if(!(res=idf(list[key[i]],key[i],list)))
+			break;
+	return res;
+}
+
+function some(list,idf){
+	var res = false;
+	for(var key = keys(list),i=keys.length;i--;)
+		if((res=idf(list[key[i]],key[i],list)))
+			break;
+	return res;
 }
 
 // filter indexkey
@@ -969,10 +978,8 @@ function once(fn){
 
 // slim equal [ method ]
 function eq(x,y){
-	if(x===y || (isPrimitive(x) && isPrimitive(y)))
+	if(x===y || ts.call(x) !== ts.call(y)|| (isPrimitive(x) && isPrimitive(y)))
 		return x===y;
-	if(ts.call(x) !== ts.call(y))
-		return false;
 	if(x.toString() === y.toString()){
 		var xkeys = keys(x) , ykeys = keys(y);
 		if(xkeys.length === ykeys.length){
@@ -1075,21 +1082,21 @@ var escapes = {
 	"\u2029" : "u2029"
 };
 
-var encodeReg = /[&<">'](?:(amp|lt|quot|gt|#39);)?/g,
-		decodeReg = /&((g|l|quo)t|amp|#39);/g,
-		stripReg = /<script\b[^>]*>(.*?)<\/script>/gim,
-		commentReg = /<!--[\s\S]*?-->/gim,
-		zipReg = /[\t\r\n\f]/gim,
-		upperReg = /[A-Z]/g,
-		sReg = '[\\s\\x20\\xA0\\uFEFF]+',
+var encodeReg    = /[&<">'](?:(amp|lt|quot|gt|#39);)?/g,
+		decodeReg    = /&((g|l|quo)t|amp|#39);/g,
+		stripReg     = /<script\b[^>]*>(.*?)<\/script>/gim,
+		commentReg   = /<!--[\s\S]*?-->/gim,
+		zipReg       = /[\t\r\n\f]/gim,
+		upperReg     = /[A-Z]/g,
+		sReg         = '[\\s\\x20\\xA0\\uFEFF]+',
 
-		collapseReg = new RegExp(sReg,'g'),
-		trimLReg = new RegExp('^'+sReg,'g'),
-		trimRReg = new RegExp(sReg+'$','g'),
+		collapseReg  = new RegExp(sReg,'g'),
+		trimLReg     = new RegExp('^'+sReg,'g'),
+		trimRReg     = new RegExp(sReg+'$','g'),
 		tagCenterReg = new RegExp('>'+sReg+'<','g'),
-		tagLeftReg = new RegExp('<'+sReg,'g'),
-		tagRightReg = new RegExp(sReg+'>','g'),
-		tagCloseReg = new RegExp('<\/'+sReg,'g');
+		tagLeftReg   = new RegExp('<'+sReg,'g'),
+		tagRightReg  = new RegExp(sReg+'>','g'),
+		tagCloseReg  = new RegExp('<\/'+sReg,'g');
 
 // String Methods 
 // @use trim
@@ -1416,20 +1423,20 @@ function aix(option){
 		}
 	};
 
+	// setTimeout data of ajax
+	if(toNumber(config.timeout)){
+		xhr.timeout = toNumber(config.timeout);
+		xhr.ontimeout = function(event){
+			if(xhr.readyState !== 4 || !xhr.responseText)
+				config.error.call(root,xhr);xhr.abort();
+		};
+	}
+
 	// send request
 	xhr.send(config.param ? 
 			(isObject(config.param) ? 
 			dataMIME(config.contentType,config.header,config.param) :
 			config.param ) : null);
-
-	// setTimeout data of ajax
-	if(toNumber(config.timeout)){
-		asy(function(){
-			if(xhr.readyState !== 4 || !xhr.responseText)
-				config.error.call(root,xhr);
-			xhr.abort();
-		},(toNumber(config.timeout)||5)*1000);
-	}
 
 	return xhr;
 }
@@ -1772,6 +1779,68 @@ chain.prototype.value = function(){
 						 .apply(null,this['-']===void 0 ? arguments : this['-']);
 };
 
+var xhooklist = {},
+		xxhr = root.XMLHttpRequest,
+		xdef = {
+			readyState:0,
+			response:{},
+			responseText:null,
+			responseType:null,
+			responseURL:null,
+			timeout:0,
+			status:0
+		};
+
+function xhookmatch(url){
+	return xhooklist[url];
+}
+
+function XHookRequest(){
+	this._xhr = new xxhr();
+
+	extend(this,xdef);
+}
+
+XHookRequest.prototype = {
+	abort:function(){
+		return this._xhr.abort();
+	},
+	open:function(type,url){
+		var res;
+		if(res = xhookmatch(url)){
+			return extend(this,{
+				responseURL : url,
+				responseType : "appliction/json",
+				responseText : res,
+				readyState : 4,
+				status : 304
+			});
+		}
+		return this._xhr.open.apply(this._xhr,arguments);
+	},
+	send:function(param){
+		if(this.responseText&&this.readyState)
+			return this.onreadystatechange(broken),extend(this,xdef);
+		return this._xhr.send.apply(this._xhr,arguments);
+	},
+	start:function(){
+		root.XMLHttpRequest = XHookRequest;
+	},
+	detect:function(url,response){
+		xhooklist[url] = toString(response);
+	},
+	remove:function(url){
+		return delete xhooklist[url];
+	},
+	stop:function(){
+		root.XMLHttpRequest = xxhr;
+	},
+	addEventListener:noop,
+	setRequestHeader:noop
+};
+
+var xhr = new XHookRequest();
+
 // Type export
 function $type(c){
 	switch((c||"").toLowerCase()){
@@ -2023,6 +2092,7 @@ function $event(c){
 		case "unbind":
 			return removeEvent;
 		case "dispatch":
+		case "trigger":
 		case "emit":
 			return emit;
 		default:
@@ -2071,6 +2141,8 @@ var nublist = {
 	find      : filter,
 	filter    : filter,
 	reject    : reject,
+	every     : every,
+	some      : some,
 	diff      : diff,
 	intsec    : intersection,
 	hook      : hook,
@@ -2142,6 +2214,7 @@ ol(zublist,function(fn,key){
 	zub.apply(null,arguments);
 });
 
+struct.xhr = xhr;
 struct.root = root;
 struct.toString = toString;
 struct.broken = broken;
