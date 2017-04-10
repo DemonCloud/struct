@@ -5,7 +5,8 @@ console.time("struct pref");
 			targ = (function(){ return arguments; }()),
 			tn = document.createElement('a'),
 			ts = '',
-			noop = function(){};
+			noop = function(){},
+			eventObj = {};
 
 	var eq = struct.eq();
 
@@ -136,6 +137,26 @@ console.time("struct pref");
 		a.equal(eq(reject(strobj,/^ab/),['cad']),true,"reject object with regExp");
 		a.equal(eq(reject(arr,function(v){ return v>3;},true),[0,1,2]),true,"reject array by key");
 		a.equal(eq(reject(strobj,/^ab/,true),['123']),true,"reject object by key");
+	});
+
+	Q.test(" - [ every ]",function(a){
+		var every = struct.every();
+		
+		var arr = [1,2,3,4,5,6];
+		var arr2 = ["a","cd","asd","ds"];
+		
+		a.equal(every(arr,function(n){ return n>0; }),true,"test pure number integer");
+		a.equal(every(arr2,function(n){ return n.length>2; }),false,"test string length");
+	});
+
+	Q.test(" - [ some ]",function(a){
+		var some = struct.some();
+		
+		var arr = [1,2,3,4,5,6];
+		var arr2 = ["a","cd","asd","ds"];
+		
+		a.equal(some(arr,function(n){ return n<0; }),false,"test pure number integer");
+		a.equal(some(arr2,function(n){ return n.length>2; }),true,"test string length");
 	});
 
 	Q.test(" - [ cat ]",function(a){
@@ -299,6 +320,26 @@ console.time("struct pref");
 		a.equal(eq(p8,p9),false,"with same string and number in object");
 		a.equal(eq(p10,p11),true,"deeping equal");
 		a.equal(eq(p12,p13),false,"test no convert type");
+	});
+
+	Q.test(" - [ doom[template] ]",function(a){
+		var doom = struct.doom();
+		var boom = struct.doom({
+			escape      : "<<-([\\s\\S]+?)>>",
+			interpolate : "<<#([\\s\\S]+?)>>",
+			evaluate    : "<<([\\s\\S]+?)>>"
+		});
+
+		var str = "{{-one}}{{#two}}{{#three}}";
+		var str2 = "<<-one>><<#two>><<#three>>";
+		var data ={
+			one:1,
+			two:2,
+			three:3
+		};
+		
+		a.equal(doom(str)(data),"123","base render");
+		a.equal(boom(str2)(data),"123","base render with escape");
 	});
 
 	Q.test(" - [ has(key) ]",function(a){
@@ -952,6 +993,123 @@ console.time("struct pref");
 		a.equal(rize(str2),"color-picker","rize custom string");
 		a.equal(rize(str3,'_'),"small_hell_bound","rize with underscore split");
 		a.equal(rize(str3,'-',true),"Small-Hell-Bound","rize with uppercase cover");
+	});
+
+	Q.test(" - [ html(encode)] ",function(a){
+		var encode = struct.html("encode");
+		var str = "<s>";
+
+		a.equal(encode(str),"&lt;s&gt;","encode string");
+	});
+
+	Q.test(" - [ html(decode)] ",function(a){
+		var decode = struct.html("decode");
+		var str = "&lt;s&gt;";
+
+		a.equal(decode(str),"<s>","decode string");
+	});
+
+	Q.test(" - [ event(add),(on),(bind) ]",function(a){
+		var on = struct.event("on");
+
+		on(eventObj,"a",function(a){
+			a.a=2;
+			a.b=3;
+		});
+		on(eventObj,"b",noop);
+
+		a.equal(typeof eventObj._events,"object","add _events key");
+		a.equal(typeof eventObj._events.a,"object","add _events key a");
+	});
+
+	Q.test(" - [ event(emit),(trigger),(dispatch) ]",function(a){
+		var emit = struct.event("emit");
+		var obj = {};
+		emit(eventObj,"a",[obj]);
+		a.equal(obj.a===2&&obj.b===3,true,"detect event had emit");
+	});
+
+	Q.test(" - [ event(remove),(unbind) ]",function(a){
+		var unbind = struct.event("unbind");
+		var on = struct.event("on");
+		var sb = {};
+
+		on(sb,"a",function(a){});
+		on(sb,"a",function(b){});
+		on(sb,"b",function(){});
+		on(sb,"c",function(){});
+
+		unbind(sb,"a");
+		unbind(sb,"b",noop);
+
+		a.equal(typeof sb._events.a,"undefined","remove event a");
+		a.equal(typeof sb._events.b,"object","not remove event b");
+	});
+
+	Q.test(" - [ event(has),(exist) ]",function(a){
+		var has = struct.event("has");
+		var on = struct.event("on");
+
+		var sb = {};
+
+		on(sb,"a",function(a){});
+		on(sb,"a",function(b){});
+		on(sb,"b",function(){});
+		on(sb,"c",noop);
+
+		a.equal(has(sb,"a"),true,"detect event a");
+		a.equal(has(sb,"b",noop),false,"detect event b with noop");
+		a.equal(has(sb,"c",noop),true,"detect event c with noop");
+		a.equal(has(sb,"d",noop),false,"detect event c with noop");
+		a.equal(has(sb,"d"),false,"detect event d exist");
+	});
+
+	Q.test(" - [ prop(get) ]",function(a){
+		var get = struct.prop("get");
+		
+		var k = {
+			a:{
+				b:1
+			},
+			c:2,
+			d:{
+				e:{
+					f:3
+				}
+			}
+		};
+
+		a.equal(get(k,"a.b"),1,"get a.b value");
+		a.equal(get(k,"c","toString"),"2","get c value with toString");
+		a.equal(get(k,"d.e.f"),3,"get deep[d.e.f] value");
+		a.equal(eq(get(k,"d.e"),{f:3}),true,"get d.e value");
+		a.equal(eq(get(k,"g")),true,"get undefined value");
+	});
+
+	Q.test(" - [ prop(set) ]",function(a){
+		var set = struct.prop("set");
+
+		var k = {};
+		
+		a.equal(eq(set(k,"a",{b:1}),{a:{b:1}}),true,"set obj key");
+		a.equal(eq(set(k,"a.b",{c:3}),{a:{b:{c:3}}}),true,"set obj deep key");
+		a.equal(eq(set(k,"a.b.c","pack"),{a:{b:{c:"pack"}}}),true,"set obj deep string");
+	});
+
+	Q.test(" - [ prop(not),(remove) ]",function(a){
+		var not = struct.prop("not");
+
+		var k = {
+			a : {
+				b :{
+					c:[2,1,3]
+				}
+			}
+		};
+		
+		a.equal(eq(not(k,"a.b.c.1"),{a:{b:{c:[2,3]}}}),true,"delete deep key");
+		a.equal(eq(not(k,"a.b.c"),{a:{b:{}}}),true,"delete single key");
+		a.equal(eq(not(k,"a"),{}),true,"delete all key");
 	});
 
 }).call(this,QUnit,struct);
