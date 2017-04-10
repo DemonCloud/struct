@@ -185,7 +185,7 @@ function isDefine(obj,name){
 
 // ArrayLike [ type ] 
 function isArrayLike(obj){
-	return (typeof obj.length === "number" && isObject(obj)) &&(
+	return obj !==null && (typeof obj.length === "number" && isObject(obj)) &&(
 				 isArray(obj) ||
 				 isDefine(obj,"Arguments") ||
 				 isDefine(obj,"NodeList") ||
@@ -220,14 +220,14 @@ function isElement(e){
 
 // Detect if a Function is Native Code with JavaScript
 function isNative(api){
-  return typeof api == 'function' ?
+  return typeof api === 'function' ?
   // Use `Function#toString` to bypass the value's own `toString` method
   // and avoid being faked out.
      reNative.test(Function.prototype.toString.call(api)) :
   // Fallback to a host object check because some environments will represent
   // things like typed arrays as DOM methods which may not conform to the
   // normal native pattern.
-     (api && typeof api == 'object' && reHostCtor.test(ts.call(api))) || false;
+     (api && typeof api === 'object' && reHostCtor.test(ts.call(api))) || false;
 }
 
 var typeArray = [
@@ -729,7 +729,7 @@ function pullWith(ary,it){
 // @use random
 function shuffle(ary){
 	var ln = ary.length,
-			disorder = Array(ln);
+			disorder = new Array(ln);
 	for( var i=0 , ra; i<ln; i++){
 		ra = randomInt(0,i);
 		if(ra !==i)
@@ -1048,7 +1048,7 @@ function paramStringify(param){
 		);
 
 	return JSON.stringify(Cparam)
-		.replace(/[\"\{\}]/g,"")
+		.replace(/["{}]/g,"")
 		.replace(/:/g,"=")
 		.replace(/,/g,"&")
 		.replace(whiteSpace,"");
@@ -1204,7 +1204,7 @@ function DOOM(txt,name){
 			res = "_p+='",
 			args = slice(arguments,2),
 
-			exp = RegExp((this.escape||no) + 
+			exp = new RegExp((this.escape||no) +
 						"|" + (this.interpolate||no) + 
 						"|" + (this.evaluate||no) +"|$","g");
 
@@ -1260,7 +1260,7 @@ function DOOM(txt,name){
 // @use cookieParse
 // @export cookie
 function cookieParse(ckstr){
-	var tmp, res={}, pars = ckstr ? ckstr.split(";") : [];
+	var res={}, pars = ckstr ? ckstr.split(";") : [];
 
 	al(pars, function(item){
 		var ind = (item||"").search("=");
@@ -1538,15 +1538,28 @@ function addEvent(obj,type,fn){
 }
 
 function removeEvent(obj,type,fn){
-	if(obj._events[type]){
-		not(obj._events[type],fn);
-		if(!obj._events[type].length || !fn)
-			delete obj._events[type];
-	}else if(!type && !fn){
-		delete obj._events;
-		return obj;
+	if(obj._events){
+		if(obj._events[type]){
+			not(obj._events[type],fn);
+			if(!obj._events[type].length || !fn)
+				delete obj._events[type];
+		}else if(!type && !fn){
+			delete obj._events;
+			return obj;
+		}
 	}
 	return obj;
+}
+
+function hasEvent(obj,type,fn){
+	var res;
+	if(obj._events){
+		if(isFn(fn) && obj._events[type])
+			res = has(obj._events[type],fn);
+		else
+			res = size(obj._events[type]);
+	}
+	return !!res;
 }
 
 function fireEvent(obj,type,fn,args){
@@ -1579,52 +1592,68 @@ function emit(obj,type,fn,args){
 
 // define deeping getProp method
 function getProp(obj,prop,dowith){
-	var tmp,keygen = (prop||"").split(".");
+	var tmp,i,keygen = (prop||"").split(".");
+
 	if(keygen.length === 1){
 		if(obj.hasOwnProperty(prop))
 			tmp = obj[prop];
 	}else{
 		// [a.b.2]
-		tmp = obj;
-		for(var i=0;i<keygen.length;i++){
-			tmp = tmp[keygen[i]]; 
-			if(isPrimitive(tmp)) 
+		for(i=0,tmp = obj;i<keygen.length;i++)
+			if(isPrimitive(tmp = tmp[keygen[i]])) 
 				break;
-		}
 	}
-	return isFn(dowith) ? dowith(tmp) : 
-		((typeof dowith === "string" && dowith) ? 
-			tmp[dowith]() : tmp);
+
+	if(dowith){
+		var args = slice(arguments,3);
+		if(isFn(dowith))
+			tmp = dowith.apply(tmp,(args.unshift(tmp),args));
+		else if(typeof dowith === "string")
+			tmp = isFn(tmp[dowith]) ? 
+						tmp[dowith].apply(tmp,args) :
+						tmp[dowith];
+	}
+		
+	return tmp;
 }
 
 function setProp(obj,prop,value){
-	var tmp,end,keygen = (prop||"").split(".");
+	var tmp,end,i,check,keygen = (prop||"").split(".");
 	if(keygen.length === 1){
-		if(obj.hasOwnProperty(prop))
-			obj[prop] = value;
+		obj[prop] = value;
 	}else{
 		// [a.b.2]
-		tmp = obj;
-		end = keygen.pop();
-		for(var i=0;i<keygen.length;i++)
-			tmp = tmp[keygen[i]]; 
+		for(i=0,tmp=obj,check,end=keygen.pop();i<keygen.length;i++)
+			tmp = (check = tmp[keygen[i]]) == null ? {} : check ;
 		tmp[end] = value;
+	}
+	return obj;
+}
+
+function rmProp(obj,prop){
+	var tmp,i,end,keygen = (prop||"").split(".");
+	if(keygen.length === 1){
+		if(obj.hasOwnProperty(prop))
+			delete obj[prop];
+	}else{
+		for(i=0,tmp=obj,end = keygen.pop();i<keygen.length;i++)
+			tmp = tmp[keygen[i]]; 
+		delete tmp[end];
 	}
 	return obj;
 }
 
 function watch(obj,prop,handle){
 	var oldval = obj[prop] , newval = oldval;
-	function getter(){ return newval; }
-	function setter(val){ 
-		oldval = newval; 
-		return newval = handle.call(obj,val,oldval,prop); 
-	}
 
 	if(delete obj[prop]){
 		define(obj,prop,{
-			get: getter,
-			set: setter,
+			get: function(){ 
+				return newval; 
+			},
+			set: function(val){ 
+				return (newval = handle.call(obj,val,oldval = newval,prop)); 
+			},
 			enumerable: true,
 			configurable: true
 		});
@@ -2093,6 +2122,9 @@ function $event(c){
 		case "remove":
 		case "unbind":
 			return removeEvent;
+		case "has":
+		case "exist":
+			return hasEvent;
 		case "dispatch":
 		case "trigger":
 		case "emit":
@@ -2108,6 +2140,9 @@ function $prop(c){
 			return getProp;
 		case "set":
 			return setProp;
+		case "not":
+		case "remove":
+			return rmProp;
 		case "watch":
 		case "listen":
 			return watch;
