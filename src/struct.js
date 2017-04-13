@@ -1,5 +1,5 @@
 /* 
- * Struct 0.1
+ * Struct
  *
  * The C Lang Javascript construction lib
  *
@@ -19,7 +19,6 @@
  *
  * @Author  : YiJun
  * @Date    : 2017.2.28 - now
- * @License : FAL
  */
 
 (function(root,struct,factory){
@@ -40,7 +39,7 @@
 
 // Strict mode
 // define const
-struct.VERSION = 0.1;
+struct.VERSION = 1.0;
 
 // base method
 var or = {},
@@ -992,11 +991,6 @@ function eq(x,y){
 	return false;
 }
 
-// use setTimeout
-function asy(fn,time){
-	return setTimeout(fn,time||0);
-}
-
 // URL [param] parse and stringify
 // Browser useful
 // @use paramParse
@@ -1031,7 +1025,7 @@ function paramParse(url){
 	var findQuery = turl.indexOf("?") , match , x = {},
 			param = ~findQuery ? turl.substr(findQuery+1) : turl;
 
-	while(match = qrsReg.exec(param))
+	while((match = qrsReg.exec(param)))
 		x[rSpace(match[1])] = rSpace(match[2]);
 
 	return x;
@@ -1084,8 +1078,8 @@ var escapes = {
 
 var encodeReg    = /[&<">'](?:(amp|lt|quot|gt|#39);)?/g,
 		decodeReg    = /&((g|l|quo)t|amp|#39);/g,
-		stripReg     = /<script\b[^>]*>(.*?)<\/script>/gim,
-		commentReg   = /<!--[\s\S]*?-->/gim,
+		stripReg     = /<script\b[^>]*>(.*?)<\/script>/gi,
+		commentReg   = /<!--[\s\S]*?-->/gi,
 		zipReg       = /[\t\r\n\f]/gim,
 		upperReg     = /[A-Z]/g,
 		sReg         = '[\\s\\x20\\xA0\\uFEFF]+',
@@ -1152,14 +1146,6 @@ function rize(s,and,upper){
 	});
 }
 
-// const DOOM4 settings
-// rule for parse Template
-var doomSetting  = {
-	escape      : "{{-([\\s\\S]+?)}}",
-	interpolate : "{{#([\\s\\S]+?)}}",
-	evaluate    : "{{([\\s\\S]+?)}}"
-};
-
 function c_ecode(str){ return ecode[str] || str; }
 function c_dcode(str){ return dcode[str] || str; }
 function c_escape(et){ return '\\' + escapes[et]; }
@@ -1198,18 +1184,88 @@ function zipHTML(str){
 // [ fast, precomplete, zoom ]
 // @use ev
 // @export doom
-function DOOM(txt,name){
+
+// const DOOM4 settings
+// rule for parse Template
+var doomSetting  = {
+	escape      : "{{-([\\s\\S]+?)}}",
+	interpolate : "{{#([\\s\\S]+?)}}",
+	command     : "{{\\*([\\s\\S]+?)}}",
+	evaluate    : "{{([\\s\\S]+?)}}",
+};
+
+var cmExec = /^([\S]+)\s?([\s\S]+)?/;
+var agExec = /[\[\]]*/g;
+
+function makeComand(command){
+	var res = "", 
+			cms = cmExec.exec(trim(command)),
+			cmd = cms[1],
+			param = cms[2];
+	if(cmd){
+		switch(cmd.toLowerCase()){
+			case "end":
+				res = "';\n}); _p+='";
+				break;
+			case "for":
+			case "each":
+				// {{* each [item,index] in list }}
+				param = param.split(" in ");
+				res = compiLing("op",param[1],param[0]);
+				break;
+			case "not":
+			case "extend":
+				//{{* not param with list }}
+				param = param.split(" with ");
+				res = compSaze(cmd,param[1],param[0]);
+				break;
+			default:
+				//{{* map list use params }}
+				param = param.split(" use ");
+				res = compSaze(cmd,param[0],param[1]||"",true);
+				break;
+		}
+	}
+
+	return res;
+}
+
+function compiLing(usestruct,who,useargs){
+	return "';\n struct."+usestruct+'()('+who+","+ 
+				 "function("+useargs.replace(agExec,'')+"){\n _p+='";
+}
+
+function compSaze(usestruct,who,useargs,assign){
+	var api = usestruct.split(":");
+	return (assign ? (who+"=") : "") + 
+				 "';\n struct."+api[0]+'("'+(api[1]||"")+'")('+who+","+
+				 useargs.replace(agExec,'')+"); _p+='";
+}
+
+function DOOM(txt,bounds,name){
 	var position = 0,
 			render,
 			res = "_p+='",
+			rname = isObject(bounds) ? 
+							name : (typeof bounds === "string" ? bounds : ""),
+			methods = isObject(bounds) ?
+								bounds : {},
 			args = slice(arguments,2),
-
 			exp = new RegExp((this.escape||no) +
 						"|" + (this.interpolate||no) + 
-						"|" + (this.evaluate||no) +"|$","g");
+						"|" + (this.command||no) + 
+						"|" + (this.evaluate||no) + 
+						"|$","g");
 
 	// start replace
-	txt.replace(exp, function(match,escape,interpolate,evaluate,offset){
+	(txt||"").replace(exp,function(
+		match,
+		escape,
+		interpolate,
+		command,
+		evaluate,
+		offset
+	){
 		res += txt.slice(position,offset).replace(escaper,c_escape);
 		// refresh index where to find text string
 		position = offset + match.length;
@@ -1219,29 +1275,28 @@ function DOOM(txt,name){
 			res += "'+((_t=(" + escape + "))==null?'':_(_t))+'";
 		else if(interpolate)
 			res += "'+((_t=(" + interpolate + "))==null?'':_t)+'";
+		else if(command)
+			res += makeComand(command);
 		else if(evaluate)
 			res += "';\n" + evaluate + "\n_p+='";
 
 		return match;
 	});
-
 	// End wrap res@ String
-	res += "';";
-	if(!name) res = "with(_x||{}){\n" + res + "\n}";
-	res = "var _t,_= struct.html('encode'),_p='';\n" + res + "\nreturn _p;";
+	// use default paramKey to compline
+	res = "with(__("+(!rname ? "__({},_x_||{})" : "{}")+",_bounds)){\n" + res + "';\n}";
+	res = "var _t,_d,_=struct.html('encode'),__=struct.extend(),_p='';\n" + res + "\nreturn _p;";
 
 	// Complete building Function string
 	// try to build anmousyous function
 	try{
-		render = ev(
-			"(function("+(name||"_x")+
-			",struct"+
-			(args.length ? ","+args.toString() : "")+"){"+ 
-			res + 
+		render = ev("(function("+(rname||"_x_")+
+			",_bounds,struct"+(args.length?","+args.toString():"")+"){"+ 
+				res + 
 			"})"
 		);
 	}catch(e){
-		e.res = res;
+		console.error(e.res = res);
 		throw e;
 	}
 
@@ -1251,7 +1306,7 @@ function DOOM(txt,name){
 	return function(data){
 		return eq(arguments,render.pre) ? (render.complete) : 
 			(render.pre=arguments, render.complete = render.apply(this,
-				[data,struct].concat(slice(arguments,1))
+				[data,methods,struct].concat(slice(arguments,1))
 			));
 	};
 }
@@ -1475,7 +1530,7 @@ function JSONP(option){
 
 	// if timeout will trigger failcall
 	if(toNumber(config.timeout)){
-		config.timesetup = asy(function(){
+		config.timesetup = setTimeout(function(){
 			document.body.removeChild(tag);
 			root[config.callback] = null;
 
@@ -2173,12 +2228,11 @@ var nublist = {
 	part      : part,
 	once      : once,
 	eq        : eq,
-	asy       : asy,
 	cookie    : cookie,
 	values    : values,
 	memoize   : memoize,
 	negate    : negate,
-	wrap      : wrap,
+	link      : wrap,
 	size      : size,
 	now       : now,
 	sort      : sort,
