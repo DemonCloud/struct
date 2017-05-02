@@ -169,16 +169,6 @@ console.time("struct pref");
 		a.equal(eq(cr,[4,5,6]),true,"cat array with Identifier");
 	});
 
-	Q.test(" - [ hook ]",function(a){
-		var hook = struct.hook();
-		var toNumber = struct.convert("number");
-		var arr = ['1','2','3','4','5'];
-		var arr2 = [1,2,3,4,5];
-	
-		a.equal(eq(hook(arr,toNumber),[1,2,3,4,5]),true,"hook arr like map");
-		a.equal(eq(hook(arr,'toString'),arr),true,"hook arr use item's api");
-	});
-
 	Q.test(" - [ pluck ]",function(a){
 		var pluck = struct.pluck();
 		var arr = [{a:1,b:2},{a:2,b:3},{a:3,b:4}];
@@ -243,7 +233,7 @@ console.time("struct pref");
 
 		a.equal(eq(intsec(arr,arr2,arr3),[1,3]),true,"intsec array");
 		a.equal(eq(intsec(arr,arr2,arr3,no),[]),true,"intsec array with single number");
-		a.equal(eq(intsec(arr,arr2,arr3,no2,str),[1]),true,"intsec array with string");
+		a.equal(eq(intsec(arr,arr2,arr3,str),[1]),true,"intsec array with string");
 	});
 
 	Q.test(" - [ merge ]",function(a){
@@ -706,6 +696,16 @@ console.time("struct pref");
 		a.equal(eq(map(arr,function(a){ return a+1; }),[2,3,4,5]),true,"map object");
 		a.equal(eq(map(obj,function(a){ return a+1; }),{a:2,b:3,c:4}),true,"map object");
 	});
+
+	Q.test(" - [ map(hook) ]",function(a){
+		var hook = struct.map("hook");
+		var toNumber = struct.convert("number");
+		var arr = ['1','2','3','4','5'];
+		var arr2 = [1,2,3,4,5];
+	
+		a.equal(eq(hook(arr,toNumber),[1,2,3,4,5]),true,"hook arr like map");
+		a.equal(eq(hook(arr,'toString'),arr),true,"hook arr use item's api");
+	});
 	
 	Q.test(" - [ unique(fast) ]",function(a){
 		var fu = struct.unique('fast');
@@ -1018,8 +1018,8 @@ console.time("struct pref");
 		});
 		on(eventObj,"b",noop);
 
-		a.equal(typeof eventObj._events,"object","add _events key");
-		a.equal(typeof eventObj._events.a,"object","add _events key a");
+		a.equal(typeof eventObj._eid,"number","add _events key");
+		a.equal(typeof eventObj._eid,"number","add _events key a");
 	});
 
 	Q.test(" - [ event(emit),(trigger),(dispatch) ]",function(a){
@@ -1042,8 +1042,8 @@ console.time("struct pref");
 		unbind(sb,"a");
 		unbind(sb,"b",noop);
 
-		a.equal(typeof sb._events.a,"undefined","remove event a");
-		a.equal(typeof sb._events.b,"object","not remove event b");
+		a.equal(typeof sb._eid,"number","remove event a");
+		a.equal(typeof sb._eid,"number","not remove event b");
 	});
 
 	Q.test(" - [ event(has),(exist) ]",function(a){

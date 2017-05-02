@@ -39,7 +39,7 @@
 
 // Strict mode
 // define const
-struct.VERSION = 1.0;
+struct.VERSION = "1.0";
 
 // base method
 var or = {},
@@ -104,6 +104,8 @@ function cit(fn){
 	};
 }
 
+// check -> function
+// a
 function citd(fn,check){
 	return function(){
 		return (check.apply(null,arguments) ? fn : cool).apply(null,arguments);
@@ -369,22 +371,21 @@ function keys(e){
 // @alias each
 function al(ary,fn,ts){
 	for(var i=0, l=ary.length; i<l; i++)
-		fn.call(ts===void 0 ? ary : ts ,ary[i],i,ary);
+		fn.call(2 in arguments ? ts : ary, ary[i], i, ary);
 	return ary;
 }
 
 function ol(obj,fn,ts){
-	al(keys(obj),function(v){ 
-		fn.call(this,obj[v],v,obj);
-	},ts===void 0 ? obj : ts);
+	var _ = function(key){ fn.call(this,obj[key],key,obj); };
+	al(keys(obj), _, 2 in arguments ? ts : obj);
 	return obj;
 }
 
-function fov(list,fn,ts){
+function fov(list){
 	if(isArray(list))
-		return al.call(null,list,fn,ts);
+		return al.apply(list,arguments);
 	else if(isObject(list) && !isFn(list) && list !== null)
-		return ol.call(null,list,fn,ts);
+		return ol.apply(list,arguments);
 	return list;
 }
 
@@ -647,33 +648,48 @@ function hook(list,hookname){
 }
 
 // pluck contain [ method ]
-function pluck(list,mapkey){
-	var res = [];
+function pluck(list,mapkey,dowith){
+	var res = [], keyname = toString(mapkey);
 	fov(list,function(item){
-		var key = keys(item);
-		for( var i=key.length; i--; )
-			if(key[i]===toString(mapkey))
-				this.push(item[key[i]]);
+		var v = getProp(item,mapkey,dowith);
+		return v !== void 0 && this.push(v);
 	},res);
 	return res;
 }
 
 // groupBy [ method ]
 function groupBy(list,by){
-	if(isArray(list)){
-		var group = {},
-				func  = isFn(by);
-		fov(list,function(val){
-			var key = func ? by(val) : val[by];
+	var group = {},
+		func  = isFn(by);
+	fov(list,function(val){
+		var key = func ? by(val) : getProp(val,by);
+		if(key){
 			if(!this[key])
 				// first time should init group check
 				this[key] = [val];
 			else
 				this[key].push(val);
-		},group);
-		return group;
-	}
-	return list;
+		}
+	},group);
+	return group;
+}
+
+// countBy [ method ]
+// countBy(['abc','de','fg'],'length') => {2: 2, 3: 1}
+// countBy([3.1, 1.4, 1.2, 2.2],Math.floor) => {1: 2, 2: 1, 3: 1}
+function countBy(list,by){
+	var res = {},
+		fn = isFn(by);
+	fov(list,function(val){
+		var key = fn ? by(val) : getProp(val,by);
+		if(key){
+			if(!res[key])
+				this[key] = 1;
+			else
+				this[key] += 1;
+		}
+	},res);
+	return res;
 }
 
 // Pairs Object to array 
@@ -752,7 +768,7 @@ function chunk(ary,size){
 // save pure number filter the false value
 // compact([1,'',false,2,undefined,null,[],3]) => [1,2,[],3]
 function compact(ary){
-	return ary.filter(cool);
+	return filter(ary,cool);
 }
 
 function concat(){
@@ -766,42 +782,26 @@ function concat(){
 // @export *intsec
 // diff([1,2],[2,3],[1,3,4],[5]) => [4,5]
 function diff(){
-	var res =[], 
-			pact = concat.apply([],arguments), 
-			ite = isFn(last(pact)) ? pact.pop() : false;
-
-	for(var i=0,l=pact.sort().length;i<l;){
-		var p = pact[i] ,list = index(pact, ite ? cit(ite,p) : p),
-				n = isArray(list) ? list.length : 1;
-		if(n===1)
-			res.push(pact[i]) && i++;
-		else
-			i+=n;
-	}
-	
+	var res = [];
+	for(var tmp = concat.apply([],arguments),
+			s = tmp.shift(tmp.push(tmp.length-1)); 
+			tmp.length !== 0; s = tmp.shift())
+			has(tmp,s,true) ? not(tmp,s,true) : res.push(s);
 	return res;
 }
 
 // intersection([1,2],[2,3],[2,3,4]) => [2]
 function intersection(){
-	var args = slice(arguments),
-			ite = isFn(last(args)) ? args.pop() : false,
-			pact = slimUnique(concat.apply([],args),true),
-			res = [];
+	var res = [], pact = slice(arguments);
+	pact.reduce(function(cot,arr){
+		var r = [];
+		if(size(cot) && size(arr))
+			al(cot,function(value){
+				if(has(this,value,true)) 
+					r.push(value); },arr);
+		return (res = r);
+	},pact.shift()||[]);
 
-	al(pact,function(key){
-		var all = true;
-		for(var i=args.length; i--;){
-			if(index(
-				isArray(args[i])?args[i]:[args[i]],
-				ite ? cit(ite,key) : key)===null
-			){
-				all = false; break;
-			}
-		}
-		if(all) res.push(key);
-	});
-	
 	return res;
 }
 
@@ -810,9 +810,7 @@ function intersection(){
 // @export merge
 // merge([1,2,3],[2,1,3],[3,4],[1,5]) => [1,2,3,4,5]
 function merge(){
-	var args = slice(arguments),
-			useq = isDefine(last(args),"Boolean") ? args.pop():false;
-	return slimUnique(concat.apply([],args),useq);
+	return slimUnique(concat.apply([],arguments),true);
 }
 
 // Drop array [ method ]
@@ -1207,6 +1205,12 @@ function makeComand(command){
 			case "end":
 				res = "';\n}); _p+='";
 				break;
+			case "if":
+			case "exist":
+				param = param.split(" then ");
+				res = "'; var " + param[0] + " = " + param[0] + " || false; "+
+							"_ext("+param[0]+","+(param[1] ? param[1].toString()+"," : "")+"function(){ _p+='";
+				break;
 			case "for":
 			case "each":
 				// {{* each [item,index] in list }}
@@ -1258,7 +1262,7 @@ function DOOM(txt,bounds,name){
 						"|$","g");
 
 	// start replace
-	(txt||"").replace(exp,function(
+	trim(txt||"").replace(exp,function(
 		match,
 		escape,
 		interpolate,
@@ -1276,7 +1280,7 @@ function DOOM(txt,bounds,name){
 		else if(interpolate)
 			res += "'+((_t=(" + interpolate + "))==null?'':_t)+'";
 		else if(command)
-			res += makeComand(command);
+			res += makeComand(command,res);
 		else if(evaluate)
 			res += "';\n" + evaluate + "\n_p+='";
 
@@ -1285,7 +1289,7 @@ function DOOM(txt,bounds,name){
 	// End wrap res@ String
 	// use default paramKey to compline
 	res = "with(__("+(!rname ? "__({},_x_||{})" : "{}")+",_bounds)){\n" + res + "';\n}";
-	res = "var _t,_d,_=struct.html('encode'),__=struct.extend(),_p='';\n" + res + "\nreturn _p;";
+	res = "var _t,_d,_ext=struct.exist(),_=struct.html('encode'),__=struct.extend(),_p='';\n" + res + "\nreturn _p;";
 
 	// Complete building Function string
 	// try to build anmousyous function
@@ -1363,19 +1367,21 @@ function cookie(param){
 // @use JSONP
 // @export ajax
 var MIME = {
+	"application/x-www-form-urlencoded": 0,
 	"application/json" : 1
 };
 
 // deal with Data type
 function dataMIME(enable,header,param){
 	if(enable)
-		if(isObject(header))
-			switch(MIME[header["Content-Type"]]){
-				case 1:
-					return JSON.stringify(param||{});
-				default : 
-					return paramStringify(param||{});
-			}
+		switch(header){
+			case 0:
+				return paramStringify(param||{});
+			case 1:
+				return JSON.stringify(param||{});
+			default : 
+				return paramStringify(param||{});
+		}
 	return param;
 }
 
@@ -1405,17 +1411,17 @@ function aix(option){
 
 	if(config.cache){
 		// *Init set localStorage
-		if(!ls.getItem("_struct"))
-			ls.setItem("_struct","{}");
+		if(!ls.getItem("_"))
+			ls.setItem("_","{}");
 
-		var cache = JSON.parse(ls.getItem("_struct"));
+		var cache = JSON.parse(ls.getItem("_"));
 		var data = cache[config.url || root.location.href.split("#").shift()];
 
 		if(data!==void 0) 
 			return config.sucess.call(root,data);
 	}
 	
-	var xhr = new XMLHttpRequest();
+	var xhr = new XMLHttpRequest(), cType;
 	// with GET method
 	if(config.type.toUpperCase() === "GET" && config.param){
 		config.url += (~config.url.search(/\?/g) ?
@@ -1437,23 +1443,17 @@ function aix(option){
 	);
 
 	// with POST method
-	if(config.type.toUpperCase() === "POST" &&
-		 config.param &&
-		 !config.header["Content-Type"] &&
-		 config.contentType)
-		xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded;chartset="+config.charset);
+	cType = isObject(config.header) ? 
+			(config.header["Content-Type"] || "application/x-www-form-urlencoded" ) : 
+			"application/x-www-form-urlencoded";
 
-	if(isObject(config.header) && config.header !== broken){
-		var contentType = config.header["Content-Type"];
+	if(config.header !== broken && isObject(config.header))
+		ol(config.header,function(val,key){ xhr.setRequestHeader(key,val); });
 
-		if(contentType)
-			if(!~contentType.search('charset') && !~contentType.search('json'))
-				config.header["Content-Type"] += ";charset=" + config.charset;
-
-		ol(config.header,function(val,key){
-			xhr.setRequestHeader(key,val);
-		});
-	}
+	if(config.type.toUpperCase() === "POST" && 
+		 config.contentType === true && 
+		 (cType||"").search("json")===-1)
+		xhr.setRequestHeader("Content-Type",cType+";chartset="+config.charset);
 
 	xhr.setRequestHeader("X-Requested-With","XMLHttpRequest");
 	xhr.setRequestHeader("Struct-Requested","StructHttpRequest");
@@ -1468,9 +1468,9 @@ function aix(option){
 				config.success.call(root,xhr.responseText,xhr,event);
 				// if cache been set writeJSON in chache
 				if(config.cache){
-					var cache = JSON.parse(ls.getItem("_struct"));
+					var cache = JSON.parse(ls.getItem("_"));
 					cache[config.url||root.location.href.split("#")[0]] = xhr.responseText;
-					ls.setItem("_struct",JSON.stringify(cache));
+					ls.setItem("_",JSON.stringify(cache));
 				}
 			} else {
 				config.error.call(root,xhr,event);
@@ -1488,12 +1488,10 @@ function aix(option){
 	}
 
 	// send request
-	xhr.send(config.param ? 
-			(isObject(config.param) ? 
-			dataMIME(config.contentType,config.header,config.param) :
-			config.param ) : null);
-
-	return xhr;
+	return xhr.send(config.param ? 
+		(isObject(config.param) ? 
+		dataMIME(config.contentType,cType,config.param) :
+		config.param ) : null),xhr;
 }
 
 function JSONP(option){
@@ -1577,62 +1575,69 @@ function ajaxPOST(url,param,sucess,error){
 // @use removeEvent
 // @use *emit
 // @export Event
+var _events = {} , _eid=0;
+
 function addEvent(obj,type,fn){
-	if(!obj._events)
-		define(obj,"_events",{
-			value : {},
-			writable : false,
-			enumerable: false,
-			configurable: true
-		});
-	if(!obj._events[type])
-		obj._events[type] = [];
-	if(!has(obj._events[type],fn))
-		obj._events[type].push(fn);
+	var id = obj._eid || 0;
+	if(id === 0) define(obj,"_eid",{ value : (id = (++_eid)), writable : false, enumerable: false, configurable: true });
+	if(!_events[id]) _events[id] = {};
+	if(!_events[id][type]) _events[id][type] = [];
+	if(!has(_events[id][type],fn)) _events[id][type].push(fn);
 	return obj;
 }
 
 function removeEvent(obj,type,fn){
-	if(obj._events){
-		if(obj._events[type]){
-			if(!((not(obj._events[type],fn)).length) || !fn)
-				delete obj._events[type];
+	var id = obj._eid || 0;
+	if(id&&_events[id]){
+		if(_events[id][type]){
+			if(!((not(_events[id][type],fn)).length) || !fn)
+				delete _events[id][type];
 		}else if(!type && !fn){
-			delete obj._events;
+			delete obj._eid;
+			delete _events[id];
 		}
 	}
 	return obj;
 }
 
 function hasEvent(obj,type,fn){
-	var res = false;
-	if(obj._events){
-		if(isFn(fn) && obj._events[type])
-			res = has(obj._events[type],fn);
+	var res = false, id= obj._eid || 0;
+	if(id&&_events[id]){
+		if(isFn(fn) && _events[id][type])
+			res = has(_events[id][type],fn);
 		else
-			res = size(obj._events[type]);
+			res = size(_events[id][type]);
 	}
 	return !!res;
 }
 
-function fireEvent(obj,type,fn,args){
-	var hasFn = isFn(fn);
-
-	if(isArray(fn) && !args){
-		args = fn;
-		fn = null;
-	}
-
-	if(obj._events&&type!=="")
-		ol(obj._events[type],function(f){
-			if(f===fn||!hasFn) f.apply(obj,args||[]);
+function copyEvent(toobj,related){
+	var rid = (isObject(related) ? related._eid : 0) || 0;
+	if(rid){
+		define(toobj,"_eid",{ 
+			value : ++_eid, 
+			writable : false, 
+			enumerable: false, 
+			configurable: true 
 		});
+
+		_events[toobj._eid] = depclone(_events[rid]);
+	}
+	return toobj;
 }
 
-function emit(obj,type,fn,args){
+function fireEvent(obj,type,args){
+	var id = obj._eid || 0, args = args||[];
+	if(id && _events[id] && type!=="")
+		ol(_events[id][type],function(f){
+			f.apply(this,args);
+		},obj);
+}
+
+function emit(obj,type,args){
 	return al(
 		toString(type).split(","),
-		function(t){ fireEvent(this,trim(t),fn,args) },
+		function(t){ fireEvent(this,trim(t),args); },
 		obj
 	),obj;
 }
@@ -1643,7 +1648,7 @@ function emit(obj,type,fn,args){
 
 // define deeping getProp method
 function getProp(obj,prop,dowith){
-	var tmp,i,keygen = (prop||"").split(".");
+	var tmp,i,keygen = toString(prop||"").split(".");
 
 	if(keygen.length === 1){
 		if(obj.hasOwnProperty(prop))
@@ -1704,22 +1709,6 @@ function rmProp(obj,prop){
 // function unwatch(obj,prop){
 // }
 
-// countBy [ method ]
-// countBy(['abc','de','fg'],'length') => {2: 2, 3: 1}
-// countBy([3.1, 1.4, 1.2, 2.2],Math.floor) => {1: 2, 2: 1, 3: 1}
-function countBy(ary,by){
-	var res = {};
-	var fn = isFn(by);
-	fov(ary,function(val,key){
-		var getkey = (fn ? by(val) : val[by]);
-		if(!res[getkey])
-			res[getkey] = 1;
-		else
-			res[getkey] += 1;
-	});
-	return res;
-}
-
 // return random element [ method ]
 // auto([1,2,3,4,5]) => random(in ary);
 function auto(ary,num){
@@ -1761,15 +1750,11 @@ function values(obj){
 function memoize(fn,context){
 	var memo = [];
 	return function(){
-		var args = slice(arguments), df;
-		for(var i=memo.length; i--; ){
-			if(eq(memo[i][0],args)){
-				df = memo[i][1]; break;
-			}
-		}
-		if(df===void 0)
-			memo.push([args,df=fn.apply(context,args)]);
-		return df;
+		var args = slice(arguments),df;
+		for(var i=memo.length; i--;)
+			if(eq(memo[i][0],args))
+				return (df=memo[i][1]);
+		return memo.push([args,df=fn.apply(context,args)]),df;
 	};
 }
 
@@ -1777,13 +1762,9 @@ function memoize(fn,context){
 function negate(fn,context){
 	var mapper = isDefine(fn,"RegExp") ? cit(regCheck,fn) : fn;
 	
-	if(isFn(mapper)){
-		return function(){
-			return !mapper.apply(context,arguments);
-		};
-	}
-
-	return cit(nseq,mapper).bind(context);
+	return isFn(mapper) ? function(){
+		return !mapper.apply(context,arguments);
+	} : cit(nseq,mapper).bind(context);
 }
 
 // create wrapper functions stack [ method ]
@@ -1811,6 +1792,16 @@ function sort(ary,key){
 	if(isArray(ary))
 		return ary.sort.apply(ary,slice(arguments,1));
 	return ary;
+}
+
+function exist(check){
+	var args = slice(arguments,1);
+	if(check)
+		last(args).apply(null,args);
+}
+
+function frozen(){
+	al(castArray.apply(null,arguments),Object.freeze);
 }
 
 // _ chain stack [ method ]
@@ -2002,7 +1993,14 @@ function $index(c){
 }
 
 function $map(c){
-	return c === "key" ? mapKey : mapValue;
+	switch ((c||"").toLowerCase()) {
+		case 'key':
+			return mapKey;
+		case 'hook':
+			return hook;
+		default:
+			return mapValue;
+	}
 }
 
 function $unique(c){
@@ -2160,6 +2158,9 @@ function $event(c){
 		case "has":
 		case "exist":
 			return hasEvent;
+		case "copy":
+		case "extend":
+			return copyEvent;
 		case "dispatch":
 		case "trigger":
 		case "emit":
@@ -2211,14 +2212,13 @@ var nublist = {
 	some      : some,
 	diff      : diff,
 	intsec    : intersection,
-	hook      : hook,
 	chunk     : chunk,
 	compact   : compact,
 	pluck     : pluck,
 	groupBy   : groupBy,
 	countBy   : countBy,
 	concat    : concat,
-	castArray : castArray,
+	cast      : castArray,
 	shuffle   : shuffle,
 	first     : first,
 	last      : last,
@@ -2236,6 +2236,8 @@ var nublist = {
 	size      : size,
 	now       : now,
 	sort      : sort,
+	exist     : exist,
+	lock      : frozen,
 	v8        : v8
 };
 
