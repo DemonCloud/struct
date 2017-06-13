@@ -22,6 +22,7 @@
   "scripts": {
     "start": "browser-sync start --server --files *.*"
   },
+	"dependencies":{},
   "devDependencies": {
     "browser-sync": "latest",
     "colors": "latest",
