@@ -1,5 +1,5 @@
 const src = "./src/";
-const dest = "./dest/";
+const dest = "./dist/";
 
 const colors = require("colors");
 const gulp = require("gulp");
