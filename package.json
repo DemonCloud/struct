@@ -1,8 +1,8 @@
 {
   "name": "ax-struct-js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "[ Struct ] is C Like faster Javascript construction utils",
-  "main": "index.js",
+  "main": "dest/struct.min.js",
   "repository": "https://github.com/DemonCloud/struct",
   "author": {
     "name": "YiJun",
