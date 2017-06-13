@@ -1,6 +1,5 @@
 const src = "./src/";
 const dest = "./dest/";
-const testdest = "./docs/js/";
 
 const colors = require("colors");
 const gulp = require("gulp");
@@ -72,8 +71,7 @@ gulp.task('build:es5',function(){
 		.pipe(eslint.result(stdout))
 		.pipe(uglify())
 		.pipe(rename('struct.min.js'))
-		.pipe(gulp.dest(dest))
-		.pipe(gulp.dest(testdest));
+		.pipe(gulp.dest(dest));
 });
 
 gulp.task('default',['build:es5']);
