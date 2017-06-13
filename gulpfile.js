@@ -71,7 +71,7 @@ gulp.task('build:es5',function(){
 		.pipe(eslint(esconfig))
 		.pipe(eslint.result(stdout))
 		.pipe(uglify())
-		.pipe(rename('struct.c.js'))
+		.pipe(rename('struct.min.js'))
 		.pipe(gulp.dest(dest))
 		.pipe(gulp.dest(testdest));
 });

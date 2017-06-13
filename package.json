@@ -1,11 +1,24 @@
 {
-  "name": "struct",
-  "version": "0.1.0",
-  "description": "Struct is faster Javascript construction lib",
+  "name": "ax-struct-js",
+  "version": "1.0.0",
+  "description": "[ Struct ] is C Like faster Javascript construction utils",
   "main": "index.js",
   "repository": "https://github.com/DemonCloud/struct",
-  "author": "YiJun <cloudywolf1@qq.com>",
-  "license": "FAL",
+  "author": {
+    "name": "YiJun",
+    "url": "https://demoncloud.github.io"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DemonCloud/struct.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DemonCloud/struct/issues"
+  },
   "scripts": {
     "start": "browser-sync start --server --files *.*"
   },

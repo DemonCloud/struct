@@ -129,18 +129,18 @@ function citd(fn,check){
 
 // @ exprot type[name] 
 var reHostCtor = /^\[object .+?Constructor\]$/,
-		// Compile a regexp using a common native method as a template.
-		// We chose `Object#toString` because there's a good chance it is not being mucked with.
-		reNative = RegExp('^' +
-			// Coerce `Object#toString` to a string
-			String(ts)
-			// Escape any special regexp characters
-			.replace(/[.*+?^${}()|[\]\/\\]/g, '\\$&')
-			// Replace mentions of `toString` with `.*?` to keep the template generic.
-			// Replace thing like `for ...` to support environments like Rhino which add extra info
-			// such as method arity.
-			.replace(/toString|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
-		);
+	// Compile a regexp using a common native method as a template.
+	// We chose `Object#toString` because there's a good chance it is not being mucked with.
+	reNative = RegExp('^' +
+		// Coerce `Object#toString` to a string
+		String(ts)
+		// Escape any special regexp characters
+		.replace(/[.*+?^${}()|[\]\/\\]/g, '\\$&')
+		// Replace mentions of `toString` with `.*?` to keep the template generic.
+		// Replace thing like `for ...` to support environments like Rhino which add extra info
+		// such as method arity.
+		.replace(/toString|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+	);
 
 // Object [ type ]
 function isObject(e){
@@ -1222,7 +1222,7 @@ function makeComand(command){
 	if(cmd){
 		switch(cmd.toLowerCase()){
 			case "end":
-				res = "';\n}); _p+='";
+				res = "';}); _p+='";
 				break;
 			case "if":
 			case "exist":
@@ -1255,8 +1255,8 @@ function makeComand(command){
 }
 
 function compiLing(usestruct,who,useargs){
-	return "';\n struct."+usestruct+'()('+who+","+ 
-				 "function("+useargs.replace(agExec,'')+"){\n _p+='";
+	return "'; struct."+usestruct+'()('+who+","+ 
+				 "function("+useargs.replace(agExec,'')+"){ _p+='";
 }
 
 function compSaze(usestruct,who,useargs,assign){
@@ -1267,13 +1267,13 @@ function compSaze(usestruct,who,useargs,assign){
 }
 
 function DOOM(txt,bounds,name){
-	var position = 0,
-		render,
+	var _, render, position = 0,
 		res = "_p+='",
+
 		rname = isObject(bounds) ? 
 		name : (typeof bounds === "string" ? bounds : ""),
-		methods = isObject(bounds) ?
-		bounds : {},
+		methods = isObject(bounds) ? bounds : {},
+
 		args = slice(arguments,2),
 		exp = new RegExp((this.escape||no) +
 			"|" + (this.interpolate||no) + 
@@ -1281,8 +1281,9 @@ function DOOM(txt,bounds,name){
 			"|" + (this.evaluate||no) + 
 			"|$","g");
 
-	// start replace
-	trim(txt||"").replace(exp,function(
+	// Start parse
+	trim(txt)
+	.replace(exp,function(
 		match,
 		escape,
 		interpolate,
@@ -1302,37 +1303,38 @@ function DOOM(txt,bounds,name){
 		else if(command)
 			res += makeComand(command,res);
 		else if(evaluate)
-			res += "';\n" + evaluate + "\n_p+='";
-
+			res += "';" + evaluate + ";_p+='";
 		return match;
-	}).replace(/_p\+=\'\'/gim,'');
+	});
+
+	// Minix compline
+	res = res.replace(/[\r\n\f]/gim,'')
+					 .replace(/_p\+=\'[\\n]*\'/gim,'')
+		 			 .replace(/\s*;;\s*/gim,';')
+					 .replace(/[\x20\xA0\uFEFF]+/gim,' ')
+					 .replace(/>\s{2,}/gim,'> ')
+					 .replace(/\s{2,}</gim,' <');
 	// End wrap res@ String
 	// use default paramKey to compline
-	res = "with(__("+(!rname ? "__({},_x_||{})" : "{}")+",_bounds)){\n" + res + "';\n}";
-	res = "var _t,_d,_ext=struct.exist(),_=struct.html('encode'),__=struct.extend(),_p='';\n" + res + "\nreturn _p;";
+	res = "with(__("+(!rname ? "__({},_x_||{})" : "{}")+",_bounds)){ " + res + "'; }";
+	res = "var _t,_d,_ext=struct.exist(),_=struct.html('encode'),__=struct.extend(),_p=''; " + res + " return _p;";
 
 	// Complete building Function string
 	// try to build anmousyous function
-	try{
-		render = ev("(function("+(rname||"_x_")+
-			",_bounds,struct"+(args.length?","+args.toString():"")+"){"+ 
-			res + 
-			"})"
-		);
-	}catch(e){
-		console.error(e.res = res);
-		throw e;
-	}
+	// console.warn(res);
+	try{ render = ev("(function("+(rname||"_x_")+",_bounds,struct"+(args.length?","+args.toString():"")+"){ "+ res + " })"); 
+	}catch(e){ console.error(e.res = res); throw e; }
 
   // @ Precomplete JavaScript Template Function
   // @ the you build once template that use diff Data, not use diff to build function again
 	// @ protect your template code other can observe it?
-	return function(data){
-		return eq(arguments,render.pre) ? (render.complete) : 
-			(render.pre=arguments, render.complete = trim(render.apply(this,
-				[data,methods,struct].concat(slice(arguments,1))
-			)));
+	_ = function(data){ return eq(arguments,render.pre) ? (render.complete) : 
+		(render.pre=arguments, render.complete = trim(render.apply(this,
+			[data,methods,struct].concat(slice(arguments,1))
+		)));
 	};
+
+	return _; eval(_)
 }
 
 // Browser cookie
@@ -1510,7 +1512,7 @@ function aix(option){
 	// send request
 	return xhr.send(config.param ? 
 		(isObject(config.param) ? 
-			dataMIME(config.contentType,cType,config.param) :
+			dataMIME(config.contentType,MIME[cType],config.param) :
 			config.param ) : null),xhr;
 }
 
@@ -1599,7 +1601,8 @@ var _events = {} , _eid=0;
 
 function addEvent(obj,type,fn){
 	var id = obj._eid || 0;
-	if(id === 0) define(obj,"_eid",{ value : (id = (++_eid)), writable : false, enumerable: false, configurable: true });
+	if(id === 0) define(obj, "_eid",
+		{ value : (id = (++_eid)), writable : false, enumerable: false, configurable: true });
 	if(!_events[id]) _events[id] = {};
 	if(!_events[id][type]) _events[id][type] = [];
 	if(!has(_events[id][type],fn)) _events[id][type].push(fn);
