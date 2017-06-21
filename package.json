@@ -3,17 +3,16 @@
   "version": "1.2.0",
   "description": "[ Struct ] is C Like faster Javascript construction utils",
   "main": "dist/struct.min.js",
-  "repository": "https://github.com/DemonCloud/struct",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DemonCloud/struct.git"
+  },
   "author": {
     "name": "YiJun",
     "url": "https://demoncloud.github.io"
   },
   "directories": {
     "test": "test"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/DemonCloud/struct.git"
   },
   "license": "MIT",
   "bugs": {
@@ -22,7 +21,7 @@
   "scripts": {
     "start": "browser-sync start --server --files *.*"
   },
-	"dependencies":{},
+  "dependencies": {},
   "devDependencies": {
     "browser-sync": "latest",
     "colors": "latest",
