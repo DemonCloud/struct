@@ -37,7 +37,11 @@
 		root.struct = root._ = _;
 
 	// due to [ Webpack ] fucking should return [ Window ]
-}(this, function(){ return window; }, function(struct){
+}(this, function(root){ 
+	if(typeof self !== "undefined") root = self; 
+	else root = this || global;
+	return root;
+}, function(struct){
 'use strict';
 
 // Strict mode
