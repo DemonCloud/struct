@@ -46,7 +46,7 @@
 
 // Strict mode
 // define const
-struct.VERSION = "3.0";
+struct.VERSION = "3.1.8";
 
 // base method
 var or = {},
@@ -1128,7 +1128,7 @@ var escapes = {
 var encodeReg    = /[&<">'](?:(amp|lt|quot|gt|#39);)?/g,
 		decodeReg    = /&((g|l|quo)t|amp|#39);/g,
 		stripReg     = /<script\b[^>]*>(.*?)<\/script>/gi,
-		commentReg   = /<!--[\s\S]*?-->/gi,
+		commentReg   = /<!--([\s\S]*?)-->/gi,
 		zipReg       = /[\t\r\n\f]/gim,
 		upperReg     = /[A-Z]/g,
 		sReg         = '[\\s\\x20\\xA0\\uFEFF]+',
@@ -1210,13 +1210,13 @@ function c_escape(et){ return '\\' + escapes[et]; }
 function encodeHTML(str){
 	return +str===str ? 
 					str :
-					str.replace(encodeReg,c_ecode);
+					toString(str).replace(encodeReg,c_ecode);
 }
 
 function decodeHTML(str){
 	return +str===str ? 
 					str : 
-					str.replace(decodeReg,c_dcode);
+					toString(str).replace(decodeReg,c_dcode);
 }
 
 function stripHTML(str){
@@ -1321,7 +1321,7 @@ function DOOM(txt,bounds,name){
 		interpolate,
 		command,
 		evaluate,
-		offset
+		offset 
 	){
 		res += txt.slice(position,offset).replace(escaper,c_escape);
 		// refresh index where to find text string
@@ -1341,6 +1341,7 @@ function DOOM(txt,bounds,name){
 
 	// Minix compline
 	res = res.replace(/[\r\n\f]/gim,'')
+	  			 .replace(/<!--(.*?)-->/gim,'')
 					 .replace(/_p\+=\'(\\n)*\'[^\+]/gim,'')
 		 			 .replace(/\s*;;\s*/gim,';')
 					 .replace(/[\x20\xA0\uFEFF]+/gim,' ')
@@ -1366,7 +1367,7 @@ function DOOM(txt,bounds,name){
 		)));
 	};
 
-	return _; eval(_)
+	return _; eval(_);
 }
 
 // Browser cookie
