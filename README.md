@@ -1,5 +1,5 @@
-#### struct 3.3.2
+#### struct 3.3.3+
 
 The C Like Javascript Utils
 
-docs : [link](https://demoncloud.github.io/Ax/)
+**Docs with Ax** : [link](https://demoncloud.github.io/Ax/)
