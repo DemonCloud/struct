@@ -12,13 +12,13 @@
  *  FireFox 4+
  *  IE 9+
  *  Android 4+
- *  Safari 6+
+ *  Safari 5+
  *
  * Server Version With
  *  Node 6.0+ (Full support with ES6)
  *
- * @Author  : YiJun
- * @Date    : 2017.2.28 - now
+ * @Author : YiJun
+ * @Date   : 2017.2.28 - now
  */
 
 (function(root,struct,factory,_){
@@ -32,9 +32,9 @@
 		if(module.exports && !module.nodeType) // support CommonJS exports
 			exports = module.exports = _;
 		exports.struct = _;
-	} else
+	} else 
 		// build on browser global object
-		root.struct = root._ = _;
+		root.struct = _;
 
 	// due to [ Webpack ] fucking should return [ Window ]
 }(this, function(root){ 
@@ -47,7 +47,7 @@
 // Strict model
 // Link to Ax.VERSION
 // define const
-struct.VERSION = "3.3.33";
+struct.VERSION = "4.0.0-alpha0.1";
 
 // base method
 var or = {},
@@ -203,9 +203,9 @@ function isRequired(e){
 // Error [ type ]
 function isError(obj){
 	return obj !== null &&
-		typeof obj === "object" &&
-		typeof obj.message === "string" &&
-		typeof obj.name === "string";
+		isObj(obj) &&
+		isStr(obj.message) &&
+		isStr(obj.name)
 }
 
 // Define the typename [ type ]
@@ -215,12 +215,10 @@ function isDefine(obj,name){
 
 // ArrayLike [ type ] 
 function isArrayLike(obj){
-	return obj !==null && (typeof obj.length === "number" && isObj(obj)) &&(
-				 isArray(obj) ||
-				 isDefine(obj,"Arguments") ||
-				 isDefine(obj,"NodeList") ||
-				 isDefine(obj,"HTMLCollection")||
-				 isDefine(obj,"Storage"));
+	return !!obj && 
+				 !isFn(obj) && 
+				 isObj(obj) && 
+				 isNum(obj.length);
 }
 
 // isNaN [ ES6 Method ]
@@ -241,11 +239,14 @@ function isDate(n){
 }
 
 function isEmpty(n){
-	return isPrimitive(n) ? false : !size(n);
+	return isStr(n) ? !size(n) : 
+	isPrimitive(n) || !size(n) ;
 }
 
 function isDOM(e){
-	return isObj(e) && e.nodeType > 0 && (e instanceof Node || e instanceof Element);
+	return isObj(e) 
+		&& e.nodeType > 0 
+		&& (e instanceof Node || e instanceof Element);
 }
 
 function isElement(e){
@@ -390,10 +391,16 @@ function toMinus(n){
 
 // XOR operation, 
 // details: http://en.wikipedia.org/wiki/XOR_swap_algorithm
-function swap(a,b){
-	a^=b;
-	b^=a;
-	a^=b;
+function swap(ary,a,b){
+	var tmp = ary[a];
+	ary[a] = ary[b];
+	ary[b] = tmp;
+
+	//[ a, b ] = [ b, a ]; 
+	
+	// a^=b;
+	// b^=a;
+	// a^=b;
 }
 
 // cast arguments to Array
@@ -693,7 +700,7 @@ function fseq(a){
 }
 
 function fastUnique(ary){
-	var u = {}, n = typeof first(ary) === 'number';
+	var u = {}, n = isNum(first(ary));
 
 	for(var i = 0 ; i<ary.length; i++){
 		if(u[ary[i]]) continue;
@@ -1019,6 +1026,15 @@ function randomDice(max){
 	return randomInt(1,(max%2===0?max:max+1));
 }
 
+// random Array [ method ]
+function randomArray(len,use){
+	var args = slice(arguments,2),
+			usemethod = $random[use] || $random.default;
+	return mapValue(fill(len,0),function(){
+		return usemethod.apply(null,args);
+	})
+}
+
 // Create Function caller [ method ]
 // @use partial
 // @use before
@@ -1341,8 +1357,7 @@ function DOOM(txt,bounds,name){
 	var _, render, position = 0,
 		res = "_p+='",
 
-		rname = isObj(bounds) ? 
-		name : (typeof bounds === "string" ? bounds : ""),
+		rname = isObj(bounds) ? name : (isStr(bounds) ? bounds : ""),
 		methods = isObj(bounds) ? bounds : {},
 
 		args = slice(arguments,2),
@@ -1759,7 +1774,7 @@ function getProp(obj,prop,dowith){
 		var args = slice(arguments,3);
 		if(isFn(dowith))
 			tmp = dowith.apply(tmp,(args.unshift(tmp),args));
-		else if(typeof dowith === "string")
+		else if(isStr(dowith))
 			tmp = isFn(tmp[dowith]) ? 
 				tmp[dowith].apply(tmp,args) :
 				tmp[dowith];
@@ -1813,14 +1828,14 @@ function auto(ary,num){
 // size(NaN) => 0
 function size(n){
 	if(!isFn(n) && n!= null && !isNaN(n))
-		return typeof n.length === 'number' ?
-			n.length : (isObj(n) ? keys(n).length : 0);
+		return isNum(n.length) ? n.length : 
+			 (isObj(n) ? keys(n).length : 0);
 	return 0;
 }
 
 // return now TimeStamp [ method ]
 function now(){
-	return (new Date()).getTime();
+	return (new Date).getTime();
 }
 
 // object values [ method ]
@@ -1872,13 +1887,60 @@ function wrap(){
 }
 
 function sort(ary,key){
-	if(isObj(ary)&&!isArray(ary)&&typeof key === "string"){
+	if(isObj(ary)&&isStr(key)&&key){
 		var target = getProp(ary,key);
 		return target.sort.apply(target,slice(arguments,2)),ary;
 	}
 
 	if(isArray(ary))
 		return ary.sort.apply(ary,slice(arguments,1));
+	return ary;
+}
+
+function IST(ary){
+	for(var i = 0 ,len=ary.length,t,j; i < len;i++) {
+		t = ary[i]; j = i-1;
+		while (j>=0 && ary[j]>t) {
+			ary[j+1] = ary[j]; j--;
+		}
+		ary[j+1] =t;
+	}
+	return ary;
+}
+
+function insertSort(ary,key){
+	if(isObj(ary)&&isStr(key)&&key) return IST(getProp(ary,key)),ary;
+	if(isArray(ary)) return IST(ary);
+	return ary;
+}
+
+function QST_part(ary,left,right){
+	var pivotValue = ary[right], index = left;
+
+	for(var i=left; i<right; i++){
+		if(ary[i]<pivotValue) swap(ary,i,index,index++);
+	}
+
+	swap(ary,right,index);
+
+	return index;
+};
+
+function QST_sort(ary,left,right){
+	if(left>right) return;
+	var index = QST_part(ary,left,right);
+	QST_sort(ary,left,index-1);
+	QST_sort(ary,index+1,right);
+}
+
+function QST(ary){
+	QST_sort(ary,0,ary.length-1);
+	return ary;
+}
+
+function quickSort(ary,key){
+	if(isObj(ary)&&!isArray(ary)&&isStr(key)) return QST(getProp(ary,key)),ary;
+	if(isArray(ary)) return QST(ary);
 	return ary;
 }
 
@@ -2056,6 +2118,7 @@ var $type = {
 	node: isNode,
 	text: isNode,
 	native: isNative,
+	need : isRequired,
 	require: isRequired,
 	required: isRequired,
 	type: typec,
@@ -2149,6 +2212,8 @@ var $random = {
 	char: randomCharacter,
 	letter: randomCharacter,
 	character: randomCharacter,
+	arr: randomArray,
+	array: randomArray,
 	date: randomDate,
 	hex: randomHex,
 	dice: randomDice,
@@ -2245,7 +2310,16 @@ var $reduce = {
 	left: reduce,
 	right: reduceRight,
 	default: reduce
-}
+};
+
+var $sort = {
+	native: sort,
+	q: quickSort,
+	i: insertSort,
+	quick: quickSort,
+	insert: insertSort,
+	default: sort
+};
 
 var $doom = {
 	default: DOOM.bind(doomSetting)
@@ -2294,7 +2368,6 @@ var nublist = {
 	link      : wrap,
 	size      : size,
 	now       : now,
-	sort      : sort,
 	exist     : exist,
 	lock      : frozen,
 	cool      : cool,
@@ -2313,6 +2386,7 @@ var zublist = {
 	map      : $map,
 	has      : $has,
 	type     : $type,
+	sort     : $sort,
 	html     : $html,
 	unique   : $unique,
 	convert  : $convert,
@@ -2354,4 +2428,5 @@ struct.toString = toString;
 struct.prototype = struct.__proto__ = null;
 
 return frozen(v8(struct));
+
 }, void 0));
