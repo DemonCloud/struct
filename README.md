@@ -1,4 +1,6 @@
-#### struct 3.3.3+
+#### struct 4.0.0+
+
+> 4.0.1-alpha VERSION
 
 The C Like Javascript Utils
 
