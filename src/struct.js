@@ -47,7 +47,7 @@
 // Strict model
 // Link to Ax.VERSION
 // define const
-struct.VERSION = "4.0.0-alpha0.5";
+struct.VERSION = "4.0.0-alpha0.6";
 
 // base method
 var or = {},
@@ -184,7 +184,7 @@ function isNum(e){
 
 // Primitive [ type ]
 function isPrimitive(e){
-	return e == null || typeof e !== "object" ;
+	return e == null || typeof e !== "object";
 }
 
 function isRegExp(e){
@@ -243,8 +243,7 @@ function isDate(n){
 }
 
 function isEmpty(n){
-	return isStr(n) ? !size(n) : 
-	isPrimitive(n) || !size(n) ;
+	return isStr(n) ? !size(n) : isPrimitive(n) || !size(n);
 }
 
 function isDOM(e){
@@ -528,10 +527,10 @@ function reduceRight(list,fn,initValue,context){
 // has([1,2,3],2) => true;
 function has(list,n,ueq){
 	var compare = isRegExp(n) ? regCheck : (ueq ? eq : seq), 
-		idf = false, i;
+			idf = false, i;
 
 	if(isArrayLike(list)){
-		for(i=list.length;i--;)
+		for(i=list.length; i--; )
 			if(idf=compare(n,list[i]))
 				break;
 	}else if(isObj(list)){
@@ -561,10 +560,12 @@ function notdel(list,k,isarr){
 function not(list,n,useq){
 	var check = isRegExp(n) ? regCheck : (useq ? eq : seq),
 			isarr = isArray(list), p = keys(list), i=0;
+
 	for( ; i<p.length; i++)
 		if(check(n,list[p[i]]))
-			if(notdel(list,p[i],isarr) && isarr)
-				p.pop(i--);
+			if(notdel(list,p[i],isarr) && isarr){
+				p.pop(); i--;
+			}
 	return list;
 }
 
@@ -1393,9 +1394,19 @@ function compSaze(usestruct,who,useargs,assign){
 				useargs.replace(agExec,'')+"); _p+='";
 }
 
+var optDOOM = {
+	line     : /[\r\n\f]/gim,
+	quot     : /\s*;;\s*/gim,
+	space    : /[\x20\xA0\uFEFF]+/gim,
+	assert   : /_p\+='(\\n)*'[^+]/gim,
+	comment  : /<!--(.*?)-->/gim,
+	tagleft  : /\s{2,}</gim,
+	tagright : />\s{2,}/gim
+};
+
 function DOOM(txt,bounds,name){
 	var _, render, position = 0,
-		res = "_p+='",
+		res = "_p+='", bounder,
 
 		rname = isObj(bounds) ? name : (isStr(bounds) ? bounds : ""),
 		methods = isObj(bounds) ? bounds : {},
@@ -1405,11 +1416,11 @@ function DOOM(txt,bounds,name){
 			"|" + (this.interpolate||no) + 
 			"|" + (this.command||no) + 
 			"|" + (this.evaluate||no) + 
-			"|$","g");
+			"|$",
+			"g");
 
 	// Start parse
-	trim(txt).
-	replace(exp,function(
+	trim(txt).replace(exp,function(
 		match,
 		escape,
 		interpolate,
@@ -1434,13 +1445,14 @@ function DOOM(txt,bounds,name){
 	});
 
 	// Minix compline
-	res = res.replace(/[\r\n\f]/gim,'').
-						replace(/<!--(.*?)-->/gim,'').
-						replace(/_p\+='(\\n)*'[^+]/gim,'').
-						replace(/\s*;;\s*/gim,';').
-						replace(/[\x20\xA0\uFEFF]+/gim,' ').
-						replace(/>\s{2,}/gim,'> ').
-						replace(/\s{2,}</gim,' <');
+	res = res.replace(optDOOM.line,'').
+						replace(optDOOM.comment,'').
+						replace(optDOOM.assert,'').
+						replace(optDOOM.quot,';').
+						replace(optDOOM.space,' ').
+						replace(optDOOM.tagright,'> ').
+						replace(optDOOM.tagleft,' <');
+
 	// End wrap res@ String
 	// use default paramKey to compline
 	res = "with(__("+(!rname ? "__({},_x_||{})" : "{}")+",_bounds)){ " + res + "'; }";
@@ -1449,22 +1461,36 @@ function DOOM(txt,bounds,name){
 	// Complete building Function string
 	// try to build anmousyous function
 	// console.warn(res);
-	try{ render = ev("(function("+(rname||"_x_")+",_bounds,struct"+(args.length?","+args.toString():"")+"){ "+ res + " })"); 
+	try{ render = ev("(function(_bounds,struct,"+(rname||"_x_")+(args.length?","+args.toString():"")+"){ "+ res + " })"); 
 	}catch(e){ console.error(e.res = res); throw e; }
 
   // @ Precomplete JavaScript Template Function
   // @ the you build once template that use diff Data, not use diff to build function again
 	// @ protect your template code other can observe it?
-	_ = function(data){ return eq(arguments,render.pre) ? (render.complete) : 
-		(render.pre=arguments, render.complete = trim(render.apply(this,
-			[data,methods,struct].concat(slice(arguments,1))
-		)));
+	
+	// _ = function(data){ return eq(arguments,render.pre) ? (render.complete) : 
+	// 	(render.pre=arguments, render.complete = trim(render.apply(this,
+	// 		[data,methods,struct].concat(slice(arguments,1))
+	// 	)));
+	// };
+	
+	bounder = [methods, struct];
+
+	_ = function(){
+		return trim(render.apply(this,
+			bounder.concat(slice(arguments))
+		));
 	};
 
 	return _; 
-
 	// ignore eval
 	eval(_);
+}
+
+var DOOM4 = DOOM.bind(doomSetting);
+
+function Axt(){
+	return memoize(DOOM4.apply(this,arguments));
 }
 
 // Browser cookie
@@ -1478,8 +1504,7 @@ function cookieParse(ckstr){
 
 		if(!~ind) return;
 		var rkey = trim(item.substr(0,ind));
-		if(rkey.length)
-			res[rkey] = trim(item.substr(ind+1));
+		if(rkey.length) res[rkey] = trim(item.substr(ind+1));
 	});
 
 	return res;
@@ -1731,7 +1756,10 @@ var _events = {} , _eid=0;
 function addEvent(obj,type,fn){
 	var id = obj._eid || 0;
 	if(id === 0) define(obj, "_eid",
-		{ value : (id = (++_eid)), writable : false, enumerable: false, configurable: true });
+		{ value : (id = (++_eid)), 
+			writable : false, 
+			enumerable: false, 
+			configurable: true });
 	if(!_events[id]) _events[id] = {};
 	if(!_events[id][type]) _events[id][type] = [];
 	if(!has(_events[id][type],fn)) _events[id][type].push(fn);
@@ -1897,10 +1925,11 @@ function memoize(fn,context){
 	var i, memo = [];
 	return function(){
 		var args = slice(arguments),df;
-		for(i=memo.length; i--;)
-			if(eq(memo[i][0],args)) return (df=memo[i][1]);
-
-		return memo.push([args,df=fn.apply(context,args)]),df;
+		for(i=memo.length; i--; )
+			if(eq(memo[i][0],args)) 
+				return (df=memo[i][1]);
+		memo.push([args,df=fn.apply(context||this,args)]);
+		return df;
 	};
 }
 
@@ -2167,9 +2196,9 @@ var $type = {
 	required: isRequired,
 	type: typec,
 	default: typec
-};
+},
 
-var $convert = {
+$convert = {
 	str: toString,
 	string: toString,
 	num: toNumber,
@@ -2180,61 +2209,61 @@ var $convert = {
 	rgb: toRGB,
 	minus: toMinus,
 	default: toString
-};
+},
 
-var $op = {
+$op = {
 	arr: al,
 	array: al,
 	obj: ol,
 	object: ol,
 	each: fov,
 	default: fov
-};
+},
 
-var $has = {
+$has = {
 	key: hasKey,
 	index: hasKey,
 	exist: has,
 	default: has
-};
+},
 
-var $index = {
+$index = {
 	first: firstindex,
 	last: lastindex,
 	single: one,
 	one: one,
 	index: index,
 	default: index
-};
+},
 
-var $map = {
+$map = {
 	key: mapKey,
 	hook: hook,
 	map: mapValue,
 	default: mapValue
-};
+},
 
-var $unique = {
+$unique = {
 	fast: fastUnique,
 	slim: slimUnique,
 	default: slimUnique
-};
+},
 
-var $pair = {
+$pair = {
 	un: unpairs,
 	unpair: unpairs,
 	pair: pairs,
 	default: pairs
-};
+},
 
-var $pull = {
+$pull = {
 	at: pullAt,
 	with: pullWith,
 	all: pullAll,
 	default: pullAll
-};
+},
 
-var $drop = {
+$drop = {
 	left: dropLeft,
 	right: dropRight,
 	lefto: dropTo,
@@ -2242,9 +2271,9 @@ var $drop = {
 	righto: dropTo.bind(true),
 	rightto: dropTo.bind(true),
 	default: dropLeft
-};
+},
 
-var $random = {
+$random = {
 	int: randomInt,
 	float: randomFloat,
 	double: randomFloat,
@@ -2262,9 +2291,9 @@ var $random = {
 	hex: randomHex,
 	dice: randomDice,
 	default: Math.random
-};
+},
 
-var $param = {
+$param = {
 	parse: paramParse,
 	str: paramStringify,
 	stringify: paramStringify,
@@ -2272,17 +2301,17 @@ var $param = {
 	query: requery,
 	requery: requery,
 	default: paramParse
-};
+},
 
-var $html = {
+$html = {
 	encode: encodeHTML,
 	decode: decodeHTML,
 	strip: stripHTML,
 	zip: zipHTML,
 	default: wrap(stripHTML,zipHTML)
-};
+},
 
-var $string = {
+$string = {
 	trim : trim,
 	trimleft: trimLeft,
 	trimright: trimRight,
@@ -2294,9 +2323,9 @@ var $string = {
 	rize: rize,
 	rizewith: rize,
 	default: toString
-};
+},
 
-var $ajax = {
+$ajax = {
 	get: ajaxGET,
 	fetch: ajaxGET,
 	put: ajaxPOST,
@@ -2305,9 +2334,9 @@ var $ajax = {
 	cors: JSONP,
 	ajax: aix,
 	default: aix
-};
+},
 
-var $event = {
+$event = {
 	on: addEvent,
 	add: addEvent,
 	bind: addEvent,
@@ -2327,18 +2356,18 @@ var $event = {
 	dispatch: emit,
 
 	default: emit
-};
+},
 
-var $prop = {
+$prop = {
 	get: getProp,
 	set: setProp,
 	rm: rmProp,
 	not: rmProp,
 	remove: rmProp,
 	default: getProp
-};
+},
 
-var $assembly = {
+$assembly = {
 	a2b: atob,
 	atob: atob,
 	btoa: btoa,
@@ -2348,41 +2377,43 @@ var $assembly = {
 	btou: btou,
 	b2u: btou,
 	default: atob
-};
+},
 
-var $reduce = {
+$reduce = {
 	left: reduce,
 	right: reduceRight,
 	default: reduce
-};
+},
 
-var $sort = {
+$sort = {
 	native: sort,
 	q: quickSort,
 	i: insertSort,
 	quick: quickSort,
 	insert: insertSort,
 	default: sort
-};
+},
 
-var $diff = {
+$diff = {
 	fast: diff,
 	slim: slimDiff,
 	default: diff
-};
+},
 
-var $intsec = {
+$intsec = {
 	fast: intsec,
 	slim: slimIntsec,
 	default: intsec
-};
+},
 
-var $doom = {
-	default: DOOM.bind(doomSetting)
-};
+$doom = {
+	axt : Axt,
+	cache : Axt,
+	default: DOOM4
+},
 
 // signet API
-var nublist = {
+nublist = {
 	chain     : _,
 	define    : define,
 	extend    : extend,
@@ -2432,10 +2463,10 @@ var nublist = {
 	ayc       : ayc,
 	cyc       : cyc,
 	v8        : v8
-};
+},
 
 // generator API
-var zublist = {
+zublist = {
 	op       : $op,
 	each     : $op,
 	map      : $map,
@@ -2460,8 +2491,7 @@ var zublist = {
 	reduce   : $reduce,
 	// error    : $error,
 	assembly : $assembly,
-	doom     : $doom,
-	vt       : $doom
+	doom     : $doom
 };
 
 // Generators
