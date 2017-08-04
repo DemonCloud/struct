@@ -1,5 +1,5 @@
-#### struct 4.0.06+
+#### struct 4.0.08+
 
-> 4.0.06-alpha0.6 VERSION
+> 4.0.08-alpha0.8 VERSION
 
 The C Like Javascript Utils
