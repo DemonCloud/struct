@@ -69,7 +69,12 @@ gulp.task('build:es5',function(){
 		.pipe(gfilter(['**'],{restore:true}))
 		.pipe(eslint(esconfig))
 		.pipe(eslint.result(stdout))
-		.pipe(uglify())
+		.pipe(uglify({
+			compress:{
+				unsafe: true,
+				hoist_vars: true
+			}
+		}))
 		.pipe(rename('struct.min.js'))
 		.pipe(gulp.dest(dest));
 });
