@@ -47,16 +47,16 @@
 // Strict model
 // Link to Ax.VERSION
 // define const
-struct.VERSION = "4.0.23";
+struct.VERSION = "4.0.24";
 
 // base method
 var or = {},
-    ar = [],
-    st = "",
-    slc = ar.slice,
-    ts = or.toString,
-    tm = st.trim,
-    cot = ar.concat,
+		ar = [],
+		st = "",
+		slc = ar.slice,
+		ts = or.toString,
+		tm = st.trim,
+		cot = ar.concat,
 		ev = eval,
 
 		broken = Object.freeze({});
@@ -267,24 +267,24 @@ function isNative(fn){
 }
 
 var typeArray = [
-  'array',
-  'function',
-  'null',
-  'undefined',
-  'arguments',
-  'boolean',
-  'string',
-  'number',
-  'date',
-  'regexp',
-  'nodeList',
-  'htmlcollection'
+	'array',
+	'function',
+	'null',
+	'undefined',
+	'arguments',
+	'boolean',
+	'string',
+	'number',
+	'date',
+	'regexp',
+	'nodeList',
+	'htmlcollection'
 ];
 
 // Typec advance typeof [ method ]
 function typec(e){
-  var types = [
-  	isArray(e),
+	var types = [
+		isArray(e),
 		isFn(e),
 		e === null,
 		e === void 0,
@@ -1209,7 +1209,7 @@ function paramStringify(param){
 }
 
 // slim Template engine call [ DOOM ]
-var no = "(.)^";
+// var no = "(.)^";
 var ecode = {
 	"&" : "&amp;",
 	">" : "&gt;",
@@ -1426,10 +1426,11 @@ function DOOM(txt,bounds,name){
 		methods = isObj(bounds) ? bounds : {},
 
 		args = slice(arguments,2),
-		exp = new RegExp((this.escape||no) +
-			"|" + (this.interpolate||no) + 
-			"|" + (this.command||no) + 
-			"|" + (this.evaluate||no) + 
+		exp = new RegExp(
+						this.escape +
+			"|" + this.interpolate + 
+			"|" + this.command + 
+			"|" + this.evaluate + 
 			"|$",
 			"g");
 
@@ -1478,8 +1479,8 @@ function DOOM(txt,bounds,name){
 	try{ render = ev("(function(_bounds,struct,"+(rname||"_x_")+(args.length?","+args.toString():"")+"){ "+res+" })"); 
 	}catch(e){ console.error(e.res = res); throw e; }
 
-  // @ Precomplete JavaScript Template Function
-  // @ the you build once template that use diff Data, not use diff to build function again
+	// @ Precomplete JavaScript Template Function
+	// @ the you build once template that use diff Data, not use diff to build function again
 	// @ protect your template code other can observe it?
 	
 	// _ = function(data){ return eq(arguments,render.pre) ? (render.complete) : 
