@@ -67,8 +67,8 @@ const stdout = (result) => {
 gulp.task('build:es5',function(){
 	return gulp.src(src+"struct.js")
 		.pipe(gfilter(['**'],{restore:true}))
-		.pipe(eslint(esconfig))
-		.pipe(eslint.result(stdout))
+		// .pipe(eslint(esconfig))
+		// .pipe(eslint.result(stdout))
 		.pipe(uglify({
 			compress:{
 				unsafe: true,
