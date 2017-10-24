@@ -1,6 +1,6 @@
 {
   "name": "ax-struct-js",
-  "version": "4.2.0",
+  "version": "4.2.2",
   "description": "[ Struct ] is C Like faster Javascript construction utils",
   "main": "dist/struct.min.js",
   "repository": {

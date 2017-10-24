@@ -47,7 +47,7 @@
 // Strict model
 // Link to Ax.VERSION
 // define const
-struct.VERSION = "4.2.0";
+struct.VERSION = "4.2.2";
 
 // base method
 var or = {},
@@ -1412,12 +1412,12 @@ function makeComand(command){
 		switch(cmd.toLowerCase()){
 			// {{* / }}
 			// {{* end }}
+			case "/":
 			case "end":
 			case "/for":
 			case "/each":
 			case "/if":
 			case "/exist":
-			case "/":
 				res = "';}); _p+='";
 				break;
 			case "if":
@@ -1701,7 +1701,6 @@ function aix(option){
 		xhr.setRequestHeader("Content-Type",cType+";chartset="+config.charset);
 
 	xhr.setRequestHeader("X-Requested-With","XMLHttpRequest");
-	xhr.setRequestHeader("Struct-Requested","StructHttpRequest");
 
 	xhr.onreadystatechange = function(event){
 		// response HTTP response header 200 or lower 300
