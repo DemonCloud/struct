@@ -30,11 +30,9 @@
   // Ruler by UMD Javascript
   // support AMD define
     define('struct',[],function(){ return _; });
-  else if(typeof exports === 'object' && typeof module !== 'undefined'){
-    if(module.exports && !module.nodeType) // support CommonJS exports
-      exports = module.exports = _;
-    exports.struct = _;
-  } else
+  else if(typeof module === 'object' && module.exports)
+    module.exports = _;
+  else
   // build on browser global object
     root.struct = _;
 
@@ -1516,7 +1514,7 @@
       return match;
     });
 
-    // Minix compline
+    // Minix compline && optimizer
     res = res.replace(optDOOM.line,'').
       replace(optDOOM.comment,'').
       replace(optDOOM.assert,'').
