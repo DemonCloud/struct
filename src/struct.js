@@ -18,7 +18,7 @@
  *  Node 6.0+ (Full support with ES6)
  *
  * @Author : YiJun 亦俊
- * @Date   : 2017.2.28 - now
+ * @Date   : 2017.2.28 - 2019.8.5
  *
  * @Document: https://yj1028.me/Ax/v3/#introduce
  */
@@ -47,9 +47,10 @@
   // Strict model
   // Link to Ax.VERSION
   // define const
-  struct.VERSION = '4.2.5';
+  struct.VERSION = '5.0.0 end';
 
   // base method
+ // base method
   var or = {},
     ar = [],
     st = '',
@@ -151,6 +152,11 @@
     return !!e && (typeof e === 'object' || isFn(e));
   }
 
+  // PlainObject [ type ]
+  function isPlainObject(e){
+    return e != null && typeof e === 'object' && e.constructor === Object;
+  }
+
   // String [ type ]
   function isStr(e){
     return typeof e === 'string' || e+'' === e;
@@ -186,14 +192,6 @@
 
   function isRequired(e){
     return 0 in arguments && e !== void 0;
-  }
-
-  // Error [ type ]
-  function isError(obj){
-    return obj !== null &&
-    isObj(obj) &&
-    isStr(obj.message) &&
-    isStr(obj.name);
   }
 
   // Define the typename [ type ]
@@ -431,7 +429,7 @@
   }
 
   function al(ary,fn,ts){
-    var i, len = ary.length, cb = createBounder(fn,ts); 
+    var i, len = ary.length, cb = createBounder(fn,ts);
     for(i=0; i<len; i++) cb(ary[i],i,ary);
     return ary;
   }
@@ -1139,7 +1137,7 @@
         var xkeys = keys(x), ykeys = keys(y), j=xkeys.length;
 
         if(xkeys.length === ykeys.length){
-          for( ;j--; ) if(!eq(x[xkeys[j]],y[xkeys[j]])) return false;
+          for(; j--; ) if(!eq(x[xkeys[j]],y[xkeys[j]])) return false;
           return true;
         }
       }
@@ -1383,7 +1381,8 @@
 
       else if(
         (elseifpart === 'elseif' ||
-      elseifpart === 'elseif(')
+      elseifpart === 'elseif(' ||
+      elseifpart === 'esle if')
       )
         evaluatec = '}else if(' + parserEval.slice(6) + '){';
 
@@ -1526,22 +1525,27 @@
     // End wrap res@ String
     // use default paramKey to compline
     res = 'with(__('+(!rname ? '__({},_x_||{})' : '{}')+',_bounds)){ ' + res + '\'; }';
-    res = 'var _t,_d,_ext=struct.exist(),_=struct.html(\'encode\'),__=struct.extend(),_p=\'\'; ' + res + ' return _p;';
+    res = 'var _t,_d,_ext=struct.exist(),_=struct.html("encode"),__=struct.extend(),_p=\'\'; ' + res + ' return _p;';
 
     // Complete building Function string
     // try to build anmousyous function
     // console.warn(res);
-    try{ render = ev('(function(_bounds,struct,'+(rname||'_x_')+(args.length?','+args.toString():'')+'){ '+res+' })');
-    }catch(e){ console.error(e.res = res); throw e; }
+    try{
+      render = ev('(function(_bounds,struct,'+(rname||'_x_')+(args.length?','+args.toString():'')+'){ '+res+' })');
+    }catch(e){
+      console.error("[cubec view] Template parser Error!", { template : res });
+      e.res = res;
+      throw e;
+    }
 
     // @ Precomplete JavaScript Template Function
     // @ the you build once template that use diff Data, not use diff to build function again
     // @ protect your template code other can observe it?
 
     // _ = function(data){ return eq(arguments,render.pre) ? (render.complete) :
-    // 	(render.pre=arguments, render.complete = trim(render.apply(this,
-    // 		[data,methods,struct].concat(slice(arguments,1))
-    // 	)));
+    //   (render.pre=arguments, render.complete = trim(render.apply(this,
+    //     [data,methods,struct].concat(slice(arguments,1))
+    //   )));
     // };
 
     bounder = [ methods, struct ];
@@ -1563,49 +1567,6 @@
     return memoize(DOOM4.apply(this,arguments));
   }
 
-  // Browser cookie
-  // @use cookieParse
-  // @export cookie
-  function cookieParse(ckstr){
-    var res={}, pars = ckstr ? ckstr.split(';') : [];
-
-    al(pars, function(item){
-      var ind = (item||'').search('=');
-
-      if(!~ind) return;
-      var rkey = trim(item.substr(0,ind));
-      if(rkey.length) res[rkey] = trim(item.substr(ind+1));
-    });
-
-    return res;
-  }
-
-  function cookie(param){
-    // args :( name , value, expires, path, domain, secure)
-    var args = slice(arguments),
-      len = args.length,
-      parsec = cookieParse(document.cookie);
-
-    if(len){
-      // get cookie
-      if(len === 1)
-        return parsec[param];
-
-      var time = new Date();
-      time.setDate(time.getDate()+365);
-
-      return document.cookie = trim(
-        args[0]+'='+(args[1]||'') + ';' +
-      'expires='+(args[2]||time.toUTCString()) + ';' +
-      'path='   +(args[3]||'/') + ';' +
-      'domain=' +(args[4]||'') + ';' +
-      ( args[5] ? 'secure':'' )
-      ),true;
-    }
-
-    return parsec;
-  }
-
   // slim ajax method
   // @use *aix
   // @use ajaxGET
@@ -1621,20 +1582,22 @@
   function dataMIME(enable,header,param){
     if(enable)
       switch(header){
-      case 0:
-        return paramStringify(param||{});
-      case 1:
-        return JSON.stringify(param||{});
-      default:
-        return paramStringify(param||{});
+        case 0:
+          return paramStringify(param || broken);
+        case 1:
+          return JSON.stringify(param || broken);
+        default:
+          return paramStringify(param || broken);
       }
     return param;
   }
 
+  var cacheaix = {};
+
   // base ajax aix [ method ]
-  function aix(option){
+  function aix(options){
+
     var config = extend({
-      // default param
       url       : '',
       type      : 'GET',
       param     : broken,
@@ -1652,38 +1615,50 @@
       aysnc     : true,
       emulateJSON : true,
       contentType : true
-    } , option || {} );
+    } , options || broken);
 
-    var ls = root.localStorage;
+    if(isFn(config.param)) config.param = config.param();
 
-    if(isFn(config.param)){
-      config.param = config.param();
-    }
+    var cacheParam = config.param ? (isPlainObject(config.param) ? paramStringify(config.param) : config.param) : "";
+    var cacheUrl = config.url + "$$" + cacheParam;
 
-    if(config.cache){
+    // check isObjisObjisObjif has ajax cache
+    if(config.cache && config.url){
+      var data;
+      var item = cacheaix[cacheUrl];
+
       // *Init set localStorage
-      if(!ls.getItem('_'))
-        ls.setItem('_','{}');
+      if(!item){
+        item = '{}';
+        cacheaix[cacheUrl] = item;
+      }
 
-      var cache = JSON.parse(ls.getItem('_'));
-      var data = cache[config.url || root.location.href.split('#').shift()];
+      if((data = item) != null){
+        try{
+          data = config.emulateJSON ? JSON.parse(data) : data;
+        }catch(e){
+          console.error("[cubec.struct] parse error with ajax cache data under emulateJSON");
+          return config.error.call(root,data);
+        }
 
-      if(data!==void 0)
-        return config.sucess.call(root,data);
+        return config.sucess.call(root,data, new XMLHttpRequest());
+      }
     }
 
-    var xhr = new XMLHttpRequest(), cType;
+    var xhr = new XMLHttpRequest();
+
     // with GET method
     if(config.type.toUpperCase() === 'GET' && config.param){
-      config.url += (~config.url.search(/\?/g) ?
-        '&' : (keys(config.param).length ? '?' : ''))+
+      config.url += (~config.url.search(/\?/g) ? '&' : (keys(config.param).length ? '?' : ''))+
       paramStringify(config.param);
       config.param = null;
     }
 
     //set Loading
-    xhr.addEventListener('loadstart',config.loading);
-    xhr.addEventListener('loadend',config.loadend);
+    if(xhr.addEventListener){
+      xhr.addEventListener('loadstart',config.loading);
+      xhr.addEventListener('loadend',config.loadend);
+    }
 
     xhr.open(
       config.type,
@@ -1694,16 +1669,23 @@
     );
 
     // with POST method
-    cType = isObj(config.header) ?
+    var cType = isObj(config.header) ?
       (config.header['Content-Type'] || 'application/x-www-form-urlencoded' ) :
       'application/x-www-form-urlencoded';
+
+    // FormData support
+    if(window.FormData != null && config.param instanceof FormData){
+      cType = '';
+      config.contentType = false;
+      delete config.header['Content-Type'];
+    }
 
     if(config.header !== broken && isObj(config.header))
       ol(config.header,function(val,key){ xhr.setRequestHeader(key,val); });
 
     if(config.type.toUpperCase() === 'POST' &&
-    config.contentType === true &&
-    (cType||'').search('json')===-1)
+      config.contentType === true &&
+      (cType||'').search('json')===-1)
       xhr.setRequestHeader('Content-Type',cType+';chartset='+config.charset);
 
     xhr.setRequestHeader('X-Requested-With','XMLHttpRequest');
@@ -1720,37 +1702,47 @@
           try{
             result = config.emulateJSON ? JSON.parse(xhr.responseText) : xhr.responseText;
           }catch(e){
-            return config.error.call(root,xhr,e,"json parser error")
+            console.error(e);
+            return config.error.call(root,xhr.responseText,xhr,event);
           }
 
           config.success.call(root,result,xhr,event);
 
           // if cache been set writeJSON in chache
-          if(config.cache){
-            var cache = JSON.parse(ls.getItem('_'));
-            cache[config.url||root.location.href.split('#')[0]] = xhr.responseText;
-            ls.setItem('_',JSON.stringify(cache));
+          if(config.cache && config.url){
+            cacheaix[cacheUrl] = xhr.responseText;
           }
         } else {
-          config.error.call(root,xhr,event);
+          var errData = {};
+
+          try{
+            errData = JSON.parse(xhr.responseText);
+          }catch(e){
+            console.error(e);
+          }
+
+          config.error.call(root,errData,xhr,event);
         }
       }
     };
 
     // setTimeout data of ajax
     if(toNumber(config.timeout)){
-      xhr.timeout = toNumber(config.timeout)*1000;
+      xhr.timeout = toNumber(config.timeout);
       xhr.ontimeout = function(){
         if(xhr.readyState !== 4 || !xhr.responseText)
-          config.error.call(root,xhr); xhr.abort();
+          config.error.call(root,{},xhr);
+        xhr.abort();
       };
     }
 
     // send request
-    return xhr.send(config.param ?
-      (isObj(config.param) ?
+    xhr.send(config.param ?
+      (isPlainObject(config.param) ?
         dataMIME(config.contentType,MIME[cType],config.param) :
-        config.param ) : null),xhr;
+        config.param) : null);
+
+    return xhr;
   }
 
   function JSONP(option){
@@ -1758,11 +1750,11 @@
       url : '',
       key : 'callback',
       param : broken,
-      timeout: 5,
+      timeout: 5000,
       error : noop,
       success : noop,
       callback : ('structJSTP'+Math.random()).replace('.','')
-    }, option || {} );
+    }, option || broken );
 
     if(isFn(config.param))
       config.param = config.param();
@@ -1777,23 +1769,23 @@
 
     // define callback
     root[config.callback] = function(res){
-      document.body.removeChild(tag,cyc(config.timesetup));
+      document.head.removeChild(tag,cyc(config.timesetup));
       root[config.callback] = null;
       config.success(res);
     };
 
     // append elm
     // send request
-    document.body.append(tag);
+    document.head.append(tag);
 
     // if timeout will trigger fail call
     if(toNumber(config.timeout)){
       config.timesetup = ayc(function(){
-        document.body.removeChild(tag);
+        document.head.removeChild(tag);
         root[config.callback] = null;
 
         config.error();
-      },config.timeout * 1000);
+      },config.timeout);
     }
   }
 
@@ -1891,10 +1883,14 @@
   }
 
   function fireEvent(obj,type,args){
-    var id = obj._eid || 0; args = args||[];
+    var res = [];
+    var id = obj._eid || 0;
+    args = args||[];
 
     if(id && _events[id] && type!=='')
-      ol(_events[id][type],function(f){ f.apply(this,args); },obj);
+      ol(_events[id][type],function(f){ res.push(f.apply(this,args)); },obj);
+
+    return res;
   }
 
   function emit(obj,type,args){
@@ -1911,16 +1907,20 @@
 
   // define deeping getProp method
   function getProp(obj,prop,dowith){
-    var tmp,i,keygen = toString(prop||'').split('.');
+    var tmp,i,check,keygen = toString(prop||'').split('.'),l=keygen.length-1;
 
     if(keygen.length === 1){
       if(obj.hasOwnProperty(prop))
         tmp = obj[prop];
     }else{
       // [a.b.2]
-      for(i=0,tmp=obj; i<keygen.length; i++)
-        if(isPrimitive(tmp = tmp[keygen[i]]))
+      for(i=0,tmp=obj; i<keygen.length; i++){
+        check = isPrimitive(tmp = tmp[keygen[i]]);
+        if(i !== l && check){
+          tmp = void 0;
           break;
+        }
+      }
     }
 
     if(dowith){
@@ -2072,9 +2072,10 @@
   function QST_part(ary,left,right){
     var pivotValue = ary[right], i=left, index = left;
 
-    for(; i<right; i++)
+    for(; i<right; i++){
       if(ary[i]<pivotValue)
         swap(ary,i,index,index++);
+    }
 
     swap(ary,right,index);
 
@@ -2234,8 +2235,11 @@
     return decodeURIComponent(escape(atob(toString(input).replace(/\s/g,''))));
   }
 
-  function ayc(fn,time){
-    return setTimeout(fn,toNumber(time));
+  function ayc(fn){
+    if(window.Promise){
+      return window.Promise.resolve().then(fn);
+    }
+    return setTimeout(fn,0);
   }
 
   function cyc(st){
@@ -2245,6 +2249,7 @@
   var $type = {
       obj: isObj,
       object: isObj,
+      plainobject: isPlainObject,
       arr: isArray,
       array: isArray,
       arraylike: isArrayLike,
@@ -2505,6 +2510,7 @@
       keys      : keys,
       noop      : noop,
       clone     : clone,
+      fireEvent : fireEvent,
       cloneDeep : clonedeep,
       depclone  : clonedeep,
       not       : not,
@@ -2531,7 +2537,6 @@
       part      : part,
       once      : once,
       eq        : eq,
-      cookie    : cookie,
       values    : values,
       memoize   : memoize,
       negate    : negate,

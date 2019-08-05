@@ -1,6 +1,6 @@
 {
   "name": "ax-struct-js",
-  "version": "4.2.5",
+  "version": "5.0.0",
   "description": "[ Struct ] is C Like faster Javascript construction utils",
   "main": "dist/struct.min.js",
   "repository": {
@@ -23,14 +23,14 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "browser-sync": "latest",
+    "browser-sync": "^2.26.7",
     "colors": "latest",
-    "gulp": "latest",
+    "gulp": "^4.0.2",
     "gulp-concat": "latest",
-    "gulp-eslint": "latest",
-    "gulp-filter": "latest",
+    "gulp-eslint": "^6.0.0",
+    "gulp-filter": "^6.0.0",
     "gulp-optimize-js": "latest",
     "gulp-rename": "latest",
-    "gulp-uglify": "latest"
+    "gulp-uglify": "^3.0.2"
   }
 }
